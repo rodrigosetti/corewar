@@ -52,6 +52,23 @@ MODIFIERS = [
     'I',  # Instructions read and write entire instructions.
     ]
 
+# ICWS'88 to ICWS'94 Conversion
+# The default modifier for ICWS'88 emulation is determined according to the
+# table below.
+#        Opcode                             A-mode    B-mode    modifier
+DEFAULT_MODIFIERS = {
+        ('DAT',)                       :  {('#$@<>', '#$@<>'): 'F'},
+        ('MOV','CMP')                  :  {('#'    , '#$@<>'): 'AB',
+                                           ('$@<>' , '#')    : 'B',
+                                           ('$@<>' , '$@<>') : 'I'},
+        ('ADD','SUB','MUL','DIV','MOD'): {('#'     , '#$@<>'): 'AB',
+                                          ('$@<>'  , '#')    : 'B',
+                                          ('$@<>'  , '$@<>') : 'F'},
+        ('SLT',)                       : {('#'     , '#$@<>'): 'AB',
+                                          ('$@<>'  , '#$@<>'): 'B'},
+        ('JMP','JMZ','JMN','DJN','SPL'): {('#$@<>' , '#$@<>'): 'B'}
+    }
+
 class Warrior(object):
 
     def __init__(self, name=None, author=None, strategy=None):
@@ -68,11 +85,22 @@ class Instruction(object):
     def __init__(self, opcode, modifier=None, addr_mode_a=None, field_a=0,
                  addr_mode_b=None, field_b=0):
         self.opcode = opcode.upper()
-        self.modifier = modifier.upper() if modifier else ''
-        self.addr_mode_a = addr_mode_a if addr_mode_a else ''
+        self.addr_mode_a = addr_mode_a if addr_mode_a else '$'
         self.field_a = field_a if field_a else 0
-        self.addr_mode_b = addr_mode_b if addr_mode_b else ''
+        self.addr_mode_b = addr_mode_b if addr_mode_b else '$'
         self.field_b = field_b if field_b else 0
+
+        # this should be last, to decide on the default modifier
+        self.modifier = modifier.upper() if modifier else self.default_modifier()
+
+    def default_modifier(self):
+        for opcodes, modes_modifiers in DEFAULT_MODIFIERS.iteritems():
+            if self.opcode in opcodes:
+                for ab_modes, modifier in modes_modifiers.iteritems():
+                    a_modes, b_modes = ab_modes
+                    if self.addr_mode_a in a_modes and self.addr_mode_b in b_modes:
+                        return modifier
+        raise RuntimeError("Error getting default modifier")
 
     def __repr__(self):
         return "<%s%s %s%d, %s%d>" % (self.opcode,
