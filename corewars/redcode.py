@@ -8,49 +8,60 @@ INSTRUCTION_REGEX = re.compile(r'([a-z]{3})'  # opcode
                                r'(?:\s+([#\$\*@\{<\}>])?\s*(.+))?$', # optional second or only operand
                                re.I)
 
-OPCODES = [
-    'DAT',     # terminate process
-    'MOV',     # move from A to B
-    'ADD',     # add A to B, store result in B
-    'SUB',     # subtract A from B, store result in B
-    'MUL',     # multiply A by B, store result in B
-    'DIV',     # divide B by A, store result in B if A <> 0, else terminate
-    'MOD',     # divide B by A, store remainder in B if A <> 0, else terminate
-    'JMP',     # transfer execution to A
-    'JMZ',     # transfer execution to A if B is zero
-    'JMN',     # transfer execution to A if B is non-zero
-    'DJN',     # decrement B, if B is non-zero, transfer execution to A
-    'SPL',     # split off process to A
-    'SLT',     # skip next instruction if A is less than B
-    'CMP',     # same as SEQ
-    'SEQ',     # (*) Skip next instruction if A is equal to B
-    'SNE',     # (*) Skip next instruction if A is not equal to B
-    'NOP',     # (*) No operation
-    'LDP',     # (+) Load P-space cell A into core address B
-    'STP',     # (+) Store A-number into P-space cell B
-    ]
+OPCODES = {
+    'DAT': 0,     # terminate process
+    'MOV': 1,     # move from A to B
+    'ADD': 2,     # add A to B, store result in B
+    'SUB': 3,     # subtract A from B, store result in B
+    'MUL': 4,     # multiply A by B, store result in B
+    'DIV': 5,     # divide B by A, store result in B if A <> 0, else terminate
+    'MOD': 6,     # divide B by A, store remainder in B if A <> 0, else terminate
+    'JMP': 7,     # transfer execution to A
+    'JMZ': 8,     # transfer execution to A if B is zero
+    'JMN': 9,     # transfer execution to A if B is non-zero
+    'DJN': 10,    # decrement B, if B is non-zero, transfer execution to A
+    'SPL': 11,    # split off process to A
+    'SLT': 12,    # skip next instruction if A is less than B
+    'CMP': 13,    # same as SEQ
+    'SEQ': 14,    # (*) Skip next instruction if A is equal to B
+    'SNE': 15,    # (*) Skip next instruction if A is not equal to B
+    'NOP': 16,    # (*) No operation
+    'LDP': 17,    # (+) Load P-space cell A into core address B
+    'STP': 18,    # (+) Store A-number into P-space cell B
+    }
 
-MODIFIERS = [
-    'A',  # Instructions read and write A-fields.
+MODIFIERS = {
+    'A': 0,  # Instructions read and write A-fields.
 
-    'B',  # Instructions read and write B-fields.
+    'B': 1,  # Instructions read and write B-fields.
 
-    'AB', # Instructions read the A-field of the A-instruction  and
-          # the B-field of the B-instruction and write to B-fields.
+    'AB': 2, # Instructions read the A-field of the A-instruction  and
+             # the B-field of the B-instruction and write to B-fields.
 
-    'BA', # Instructions read the B-field of the A-instruction  and
-          # the A-field of the B-instruction and write to A-fields.
+    'BA': 3, # Instructions read the B-field of the A-instruction  and
+             # the A-field of the B-instruction and write to A-fields.
 
-    'F',  # Instructions read both A- and B-fields of  the  the  A and
-          # B-instruction and write to both A- and B-fields (A to A and B
-          # to B).
+    'F': 4,  # Instructions read both A- and B-fields of  the  the  A and
+             # B-instruction and write to both A- and B-fields (A to A and B
+             # to B).
 
-    'X',  # Instructions read both A- and B-fields of  the  the  A and
-          # B-instruction  and  write  to both A- and B-fields exchanging
-          # fields (A to B and B to A).
+    'X': 5,  # Instructions read both A- and B-fields of  the  the  A and
+             # B-instruction  and  write  to both A- and B-fields exchanging
+             # fields (A to B and B to A).
 
-    'I',  # Instructions read and write entire instructions.
-    ]
+    'I': 6   # Instructions read and write entire instructions.
+    }
+
+MODES = {
+    '#': 0,       # immediate
+    '$': 1,       # direct
+    '@': 2,       # indirect using B-field
+    '<': 3,       # predecrement indirect using B-field
+    '>': 4,       # postincrement indirect using B-field
+    '*': 5,       # (*) indirect using A-field
+    '{': 6,       # (*) predecrement indirect using A-field
+    '}': 7,       # (*) postincrement indirect using A-field
+    }
 
 # ICWS'88 to ICWS'94 Conversion
 # The default modifier for ICWS'88 emulation is determined according to the
@@ -69,6 +80,13 @@ DEFAULT_MODIFIERS = {
         ('JMP','JMZ','JMN','DJN','SPL'): {('#$@<>' , '#$@<>'): 'B'}
     }
 
+# Transform the readable form above, into the internal representation
+DEFAULT_MODIFIERS = dict((tuple(OPCODES[opcode] for opcode in opcodes),
+                         dict(((tuple(MODES[a] for a in ab_modes[0]),
+                                tuple(MODES[b] for b in ab_modes[1])),
+                               MODIFIERS[modifier]) for ab_modes, modifier in ab_modes_modifiers.iteritems()))
+                         for opcodes, ab_modes_modifiers in DEFAULT_MODIFIERS.iteritems())
+
 class Warrior(object):
 
     def __init__(self, name=None, author=None, strategy=None):
@@ -84,14 +102,14 @@ class Instruction(object):
 
     def __init__(self, opcode, modifier=None, addr_mode_a=None, field_a=0,
                  addr_mode_b=None, field_b=0):
-        self.opcode = opcode.upper()
-        self.addr_mode_a = addr_mode_a if addr_mode_a else '$'
+        self.opcode = OPCODES[opcode.upper()]
+        self.addr_mode_a = MODES[addr_mode_a if addr_mode_a else '$']
+        self.addr_mode_b = MODES[addr_mode_b if addr_mode_b else '$']
         self.field_a = field_a if field_a else 0
-        self.addr_mode_b = addr_mode_b if addr_mode_b else '$'
         self.field_b = field_b if field_b else 0
 
         # this should be last, to decide on the default modifier
-        self.modifier = modifier.upper() if modifier else self.default_modifier()
+        self.modifier = MODIFIERS[modifier.upper()] if modifier else self.default_modifier()
 
     def default_modifier(self):
         for opcodes, modes_modifiers in DEFAULT_MODIFIERS.iteritems():
@@ -103,10 +121,14 @@ class Instruction(object):
         raise RuntimeError("Error getting default modifier")
 
     def __repr__(self):
-        return "<%s%s %s%d, %s%d>" % (self.opcode,
-                                      '.' + self.modifier if self.modifier else '',
-                                      self.addr_mode_a, self.field_a,
-                                      self.addr_mode_b, self.field_b)
+        # inverse lookup the instruction values
+        opcode   = next(key for key,value in OPCODES.iteritems() if value==self.opcode)
+        modifier = next(key for key,value in MODIFIERS.iteritems() if value==self.modifier)
+        a_mode   = next(key for key,value in MODES.iteritems() if value==self.addr_mode_a)
+        b_mode   = next(key for key,value in MODES.iteritems() if value==self.addr_mode_b)
+
+        return "<%s.%s %s%d, %s%d>" % (opcode, modifier, a_mode, self.field_a,
+                                      b_mode, self.field_b)
 
 def parse(input, environment={}):
 
