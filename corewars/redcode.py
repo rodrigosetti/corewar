@@ -100,13 +100,13 @@ class Warrior(object):
 
 class Instruction(object):
 
-    def __init__(self, opcode, modifier=None, addr_mode_a=None, field_a=0,
-                 addr_mode_b=None, field_b=0):
+    def __init__(self, opcode, modifier=None, a_mode=None, a_value=0,
+                 b_mode=None, b_value=0):
         self.opcode = OPCODES[opcode.upper()]
-        self.addr_mode_a = MODES[addr_mode_a if addr_mode_a else '$']
-        self.addr_mode_b = MODES[addr_mode_b if addr_mode_b else '$']
-        self.field_a = field_a if field_a else 0
-        self.field_b = field_b if field_b else 0
+        self.a_mode = MODES[a_mode if a_mode else '$']
+        self.b_mode = MODES[b_mode if b_mode else '$']
+        self.a_value = a_value if a_value else 0
+        self.b_value = b_value if b_value else 0
 
         # this should be last, to decide on the default modifier
         self.modifier = MODIFIERS[modifier.upper()] if modifier else self.default_modifier()
@@ -116,7 +116,7 @@ class Instruction(object):
             if self.opcode in opcodes:
                 for ab_modes, modifier in modes_modifiers.iteritems():
                     a_modes, b_modes = ab_modes
-                    if self.addr_mode_a in a_modes and self.addr_mode_b in b_modes:
+                    if self.a_mode in a_modes and self.b_mode in b_modes:
                         return modifier
         raise RuntimeError("Error getting default modifier")
 
@@ -124,11 +124,11 @@ class Instruction(object):
         # inverse lookup the instruction values
         opcode   = next(key for key,value in OPCODES.iteritems() if value==self.opcode)
         modifier = next(key for key,value in MODIFIERS.iteritems() if value==self.modifier)
-        a_mode   = next(key for key,value in MODES.iteritems() if value==self.addr_mode_a)
-        b_mode   = next(key for key,value in MODES.iteritems() if value==self.addr_mode_b)
+        a_mode   = next(key for key,value in MODES.iteritems() if value==self.a_mode)
+        b_mode   = next(key for key,value in MODES.iteritems() if value==self.b_mode)
 
-        return "<%s.%s %s%d, %s%d>" % (opcode, modifier, a_mode, self.field_a,
-                                      b_mode, self.field_b)
+        return "<%s.%s %s%d, %s%d>" % (opcode, modifier, a_mode, self.a_value,
+                                      b_mode, self.b_value)
 
 def parse(input, environment={}):
 
@@ -204,7 +204,7 @@ def parse(input, environment={}):
                 raise ValueError('Error at line %d: expected instruction in expression: "%s"' %
                                  (n, line))
             else:
-                opcode, modifier, addr_mode_a, field_a, addr_mode_b, field_b = m.groups()
+                opcode, modifier, a_mode, a_value, b_mode, b_value = m.groups()
 
                 if opcode.upper() not in OPCODES:
                     raise ValueError('Invalid opcode: %s in line %d: "%s"' %
@@ -216,8 +216,8 @@ def parse(input, environment={}):
                 # add parts of instruction read. the fields should be parsed
                 # as an expression in the second pass, to expand labels
                 warrior.instructions.append(Instruction(opcode, modifier,
-                                                        addr_mode_a, field_a,
-                                                        addr_mode_b, field_b))
+                                                        a_mode, a_value,
+                                                        b_mode, b_value))
 
             # increment code counting
             code_address += 1
@@ -231,10 +231,10 @@ def parse(input, environment={}):
         relative_labels = dict((name, address-n) for name, address in labels.iteritems())
 
         # evaluate instruction fields using global environment and labels
-        if isinstance(instruction.field_a, str):
-            instruction.field_a = eval(instruction.field_a, environment, relative_labels)
-        if isinstance(instruction.field_b, str):
-            instruction.field_b = eval(instruction.field_b, environment, relative_labels)
+        if isinstance(instruction.a_value, str):
+            instruction.a_value = eval(instruction.a_value, environment, relative_labels)
+        if isinstance(instruction.b_value, str):
+            instruction.b_value = eval(instruction.b_value, environment, relative_labels)
 
     return warrior
 
