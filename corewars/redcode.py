@@ -89,10 +89,14 @@ DEFAULT_MODIFIERS = dict((tuple(OPCODES[opcode] for opcode in opcodes),
 
 class Warrior(object):
 
-    def __init__(self, name=None, author=None, strategy=None):
+    def __init__(self, name=None, author=None, date=None, version=None,
+                 strategy=None, start=0):
         self.name = name
         self.author = author
+        self.date = date
+        self.version = version
         self.strategy = strategy
+        self.start = start
         self.instructions = []
 
     def __repr__(self):
@@ -136,9 +140,9 @@ def parse(input, environment={}):
     lines = []
     labels = {}
     code_address = 0
-    start_expr = '0'
 
     warrior = Warrior()
+    warrior.strategy = []
 
     # first pass
     for n, line in enumerate(input):
@@ -166,6 +170,21 @@ def parse(input, environment={}):
                 warrior.author = m.group(1).strip()
                 continue
 
+            m = re.match(r'^;date\s+(.+)$', line, re.I)
+            if m:
+                warrior.date = m.group(1).strip()
+                continue
+
+            m = re.match(r'^;version\s+(.+)$', line, re.I)
+            if m:
+                warrior.version = m.group(1).strip()
+                continue
+
+            m = re.match(r'^;strat(?:egy)?\s+(.+)$', line, re.I)
+            if m:
+                warrior.strategy.append(m.group(1).strip())
+                continue
+
             # Test if assert expression evaluates to true
             m = re.match(r'^;assert\s+(.+)$', line, re.I)
             if m:
@@ -174,29 +193,41 @@ def parse(input, environment={}):
                 continue
 
             # ignore other comments
-            if line.startswith(';'):
-                continue
+            m = re.match(r'^([^;]*)\s*;', line)
+            if m:
+                # rip off comment from the line
+                line = m.group(1).strip()
+                # if this is a comment line
+                if not line: continue
 
             # Match ORG
             m = re.match(r'ORG\s+(.+)\s*$', line, re.I)
             if m:
-                start_expr = m.group(1)
+                warrior.start = m.group(1)
                 continue
 
             # Match END
             m = re.match(r'END(?:\s+([^\s].+))?$', line, re.I)
             if m:
                 if m.group(1):
-                    start_expr = m.group(1)
+                    warrior.start = m.group(1)
                 break # stop processing (end of redcode)
 
-            # Match label
-            m = re.match(r'(\w+)\s*:\s*(.*)\s*$', line)
-            if m:
-                labels[m.group(1)] = code_address
+            # Keep matching the first word until it's no label anymore
+            while True:
+                m = re.match(r'([a-z]\w*)\s*(.+)\s*$', line)
+                if m:
+                    label_candidate = m.group(1)
+                    if label_candidate.upper() not in OPCODES.keys():
+                        labels[label_candidate] = code_address
 
-                # strip label off and continue parsing
-                line = m.group(2)
+                        # strip label off and keep looking
+                        line = m.group(2)
+                        continue
+                        break
+                # its an instruction, not label. proceed OR no match, probably
+                # a all-value-omitted instruction.
+                break
 
             # At last, it should match an instruction
             m = INSTRUCTION_REGEX.match(line)
@@ -222,6 +253,13 @@ def parse(input, environment={}):
             # increment code counting
             code_address += 1
 
+
+    # join strategy lines with line breaks
+    warrior.strategy = '\n'.join(warrior.strategy)
+
+    # evaluate start expression
+    if isinstance(warrior.start, str):
+        warrior.start = eval(warrior.start, environment, labels)
 
     # second pass
     for n, instruction in enumerate(warrior.instructions):
