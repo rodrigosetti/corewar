@@ -149,7 +149,7 @@ def parse(input, environment={}):
         line = line.strip()
         if line:
             # process info comments
-            m = re.match(r'^;redcode(?:-94)?$', line, re.I)
+            m = re.match(r'^;redcode\w*$', line, re.I)
             if m:
                 if found_recode_info_comment:
                     # stop reading, found second ;redcode
