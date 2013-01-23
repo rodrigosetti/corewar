@@ -4,8 +4,8 @@ import re
 
 INSTRUCTION_REGEX = re.compile(r'([a-z]{3})'  # opcode
                                r'(?:\s*\.\s*([abfxi]{1,2}))?' # optional modifier
-                               r'(?:\s+([#\$\*@\{<\}>])?\s*([^,]+),)?' # optional first op (must have second)
-                               r'(?:\s+([#\$\*@\{<\}>])?\s*(.+))?$', # optional second or only operand
+                               r'(?:\s*([#\$\*@\{<\}>])?\s*([^,$]+))?' # optional first value
+                               r'(?:\s*,\s*([#\$\*@\{<\}>])?\s*(.+))?$', # optional second value
                                re.I)
 
 OPCODES = {
