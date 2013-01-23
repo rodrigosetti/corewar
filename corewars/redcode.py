@@ -2,82 +2,98 @@
 
 import re
 
+__all__ = ['parse', 'DAT', 'MOV', 'ADD', 'SUB', 'MUL', 'DIV', 'MOD', 'JMP',
+           'JMZ', 'JMN', 'DJN', 'SPL', 'SLT', 'CMP', 'SEQ', 'SNE', 'NOP',
+           'LDP', 'STP', 'M_A', 'M_B', 'M_AB', 'M_BA', 'M_F', 'M_X',
+           'IMMEDIATE', 'DIRECT', 'INDIRECT_B', 'PREDEC_B', 'POSTINC_B',
+           'INDIRECT_A', 'PREDEC_A', 'POSTINC_A', 'Instruction', 'Warrior']
+
+DAT = 0     # terminate process
+MOV = 1     # move from A to B
+ADD = 2     # add A to B, store result in B
+SUB = 3     # subtract A from B, store result in B
+MUL = 4     # multiply A by B, store result in B
+DIV = 5     # divide B by A, store result in B if A <> 0, else terminate
+MOD = 6     # divide B by A, store remainder in B if A <> 0, else terminate
+JMP = 7     # transfer execution to A
+JMZ = 8     # transfer execution to A if B is zero
+JMN = 9     # transfer execution to A if B is non-zero
+DJN = 10    # decrement B, if B is non-zero, transfer execution to A
+SPL = 11    # split off process to A
+SLT = 12    # skip next instruction if A is less than B
+CMP = 13    # same as SEQ
+SEQ = 14    # Skip next instruction if A is equal to B
+SNE = 15    # Skip next instruction if A is not equal to B
+NOP = 16    # No operation
+LDP = 17    # Load P-space cell A into core address B
+STP = 18    # Store A-number into P-space cell B
+
+# Instructions read and write A-fields.
+M_A = 0
+
+# Instructions read and write B-fields.
+M_B = 1
+
+# Instructions read the A-field of the A-instruction and the B-field of the
+# B-instruction and write to B-fields.
+M_AB = 2
+
+# Instructions read the B-field of the A-instruction and the A-field of the
+# B-instruction and write to A-fields.
+M_BA = 3
+
+# Instructions read both A- and B-fields of the A and B-instruction and
+# write to both A- and B-fields (A to A and B to B).
+M_F = 4
+
+# Instructions read both A- and B-fields of the A and B-instruction  and
+# write  to both A- and B-fields exchanging fields (A to B and B to A).
+M_X = 5
+
+# Instructions read and write entire instructions.
+M_I = 6
+
+IMMEDIATE = 0   # immediate
+DIRECT = 1      # direct
+INDIRECT_B = 2  # indirect using B-field
+PREDEC_B  = 3   # predecrement indirect using B-field
+POSTINC_B = 4   # postincrement indirect using B-field
+INDIRECT_A = 5  # (*) indirect using A-field
+PREDEC_A = 6    # (*) predecrement indirect using A-field
+POSTINC_A = 7   # (*) postincrement indirect using A-field
+
 INSTRUCTION_REGEX = re.compile(r'([a-z]{3})'  # opcode
                                r'(?:\s*\.\s*([abfxi]{1,2}))?' # optional modifier
                                r'(?:\s*([#\$\*@\{<\}>])?\s*([^,$]+))?' # optional first value
                                r'(?:\s*,\s*([#\$\*@\{<\}>])?\s*(.+))?$', # optional second value
                                re.I)
 
-OPCODES = {
-    'DAT': 0,     # terminate process
-    'MOV': 1,     # move from A to B
-    'ADD': 2,     # add A to B, store result in B
-    'SUB': 3,     # subtract A from B, store result in B
-    'MUL': 4,     # multiply A by B, store result in B
-    'DIV': 5,     # divide B by A, store result in B if A <> 0, else terminate
-    'MOD': 6,     # divide B by A, store remainder in B if A <> 0, else terminate
-    'JMP': 7,     # transfer execution to A
-    'JMZ': 8,     # transfer execution to A if B is zero
-    'JMN': 9,     # transfer execution to A if B is non-zero
-    'DJN': 10,    # decrement B, if B is non-zero, transfer execution to A
-    'SPL': 11,    # split off process to A
-    'SLT': 12,    # skip next instruction if A is less than B
-    'CMP': 13,    # same as SEQ
-    'SEQ': 14,    # (*) Skip next instruction if A is equal to B
-    'SNE': 15,    # (*) Skip next instruction if A is not equal to B
-    'NOP': 16,    # (*) No operation
-    'LDP': 17,    # (+) Load P-space cell A into core address B
-    'STP': 18,    # (+) Store A-number into P-space cell B
-    }
+OPCODES = {'DAT': DAT, 'MOV': MOV, 'ADD': ADD, 'SUB': SUB, 'MUL': MUL,
+           'DIV': DIV, 'MOD': MOD, 'JMP': JMP, 'JMZ': JMZ, 'JMN': JMN,
+           'DJN': DJN, 'SPL': SPL, 'SLT': SLT, 'CMP': CMP, 'SEQ': SEQ,
+           'SNE': SNE, 'NOP': NOP, 'LDP': LDP, 'STP': STP}
 
-MODIFIERS = {
-    'A': 0,  # Instructions read and write A-fields.
+MODIFIERS = {'A': M_A, 'B': M_B, 'AB': M_AB, 'BA': M_BA, 'F': M_F, 'X': M_X,
+             'I': M_I}
 
-    'B': 1,  # Instructions read and write B-fields.
-
-    'AB': 2, # Instructions read the A-field of the A-instruction  and
-             # the B-field of the B-instruction and write to B-fields.
-
-    'BA': 3, # Instructions read the B-field of the A-instruction  and
-             # the A-field of the B-instruction and write to A-fields.
-
-    'F': 4,  # Instructions read both A- and B-fields of  the  the  A and
-             # B-instruction and write to both A- and B-fields (A to A and B
-             # to B).
-
-    'X': 5,  # Instructions read both A- and B-fields of  the  the  A and
-             # B-instruction  and  write  to both A- and B-fields exchanging
-             # fields (A to B and B to A).
-
-    'I': 6   # Instructions read and write entire instructions.
-    }
-
-MODES = {
-    '#': 0,       # immediate
-    '$': 1,       # direct
-    '@': 2,       # indirect using B-field
-    '<': 3,       # predecrement indirect using B-field
-    '>': 4,       # postincrement indirect using B-field
-    '*': 5,       # (*) indirect using A-field
-    '{': 6,       # (*) predecrement indirect using A-field
-    '}': 7,       # (*) postincrement indirect using A-field
-    }
+MODES = { '#': IMMEDIATE, '$': DIRECT, '@': INDIRECT_B, '<': PREDEC_B,
+          '>': POSTINC_B, '*': INDIRECT_A, '{': PREDEC_A, '}': PREDEC_B }
 
 # ICWS'88 to ICWS'94 Conversion
 # The default modifier for ICWS'88 emulation is determined according to the
 # table below.
 #        Opcode                             A-mode    B-mode    modifier
 DEFAULT_MODIFIERS = {
-        ('DAT',)                       :  {('#$@<>', '#$@<>'): 'F'},
-        ('MOV','CMP')                  :  {('#'    , '#$@<>'): 'AB',
-                                           ('$@<>' , '#')    : 'B',
-                                           ('$@<>' , '$@<>') : 'I'},
-        ('ADD','SUB','MUL','DIV','MOD'): {('#'     , '#$@<>'): 'AB',
-                                          ('$@<>'  , '#')    : 'B',
-                                          ('$@<>'  , '$@<>') : 'F'},
-        ('SLT',)                       : {('#'     , '#$@<>'): 'AB',
-                                          ('$@<>'  , '#$@<>'): 'B'},
-        ('JMP','JMZ','JMN','DJN','SPL'): {('#$@<>' , '#$@<>'): 'B'}
+        ('DAT',)                       : {('#$@<>', '#$@<>'): 'F'},
+        ('MOV','CMP')                  : {('#'    , '#$@<>'): 'AB',
+                                          ('$@<>' , '#'    ): 'B' ,
+                                          ('$@<>' , '$@<>' ): 'I'},
+        ('ADD','SUB','MUL','DIV','MOD'): {('#'    , '#$@<>'): 'AB',
+                                          ('$@<>' , '#'    ): 'B' ,
+                                          ('$@<>' , '$@<>' ): 'F'},
+        ('SLT',)                       : {('#'    , '#$@<>'): 'AB',
+                                          ('$@<>' , '#$@<>'): 'B'},
+        ('JMP','JMZ','JMN','DJN','SPL'): {('#$@<>', '#$@<>'): 'B'}
     }
 
 # Transform the readable form above, into the internal representation
@@ -88,6 +104,7 @@ DEFAULT_MODIFIERS = dict((tuple(OPCODES[opcode] for opcode in opcodes),
                          for opcodes, ab_modes_modifiers in DEFAULT_MODIFIERS.iteritems())
 
 class Warrior(object):
+    "An encapsulation of a Redcode Warrior, with instructions and meta-data"
 
     def __init__(self, name=None, author=None, date=None, version=None,
                  strategy=None, start=0):
@@ -99,18 +116,22 @@ class Warrior(object):
         self.start = start
         self.instructions = []
 
+    def __len__(self):
+        return len(self.instructions)
+
     def __repr__(self):
         return "<Warrior name=%s %d instructions>" % (self.name, len(self.instructions))
 
 class Instruction(object):
+    "An encapsulation of a Redcode instruction."
 
-    def __init__(self, opcode, modifier=None, a_mode=None, a_value=0,
-                 b_mode=None, b_value=0):
+    def __init__(self, opcode, modifier=None, a_mode=None, a_number=0,
+                 b_mode=None, b_number=0):
         self.opcode = OPCODES[opcode.upper()]
         self.a_mode = MODES[a_mode if a_mode else '$']
         self.b_mode = MODES[b_mode if b_mode else '$']
-        self.a_value = a_value if a_value else 0
-        self.b_value = b_value if b_value else 0
+        self.a_number = a_number if a_number else 0
+        self.b_number = b_number if b_number else 0
 
         # this should be last, to decide on the default modifier
         self.modifier = MODIFIERS[modifier.upper()] if modifier else self.default_modifier()
@@ -131,10 +152,12 @@ class Instruction(object):
         a_mode   = next(key for key,value in MODES.iteritems() if value==self.a_mode)
         b_mode   = next(key for key,value in MODES.iteritems() if value==self.b_mode)
 
-        return "<%s.%s %s%d, %s%d>" % (opcode, modifier, a_mode, self.a_value,
-                                      b_mode, self.b_value)
+        return "<%s.%s %s%d, %s%d>" % (opcode, modifier, a_mode, self.a_number,
+                                      b_mode, self.b_number)
 
 def parse(input, environment={}):
+    """ Parse a Redcode code from a line iterator (input) returning a Warrior
+        object."""
 
     found_recode_info_comment = False
     lines = []
@@ -235,7 +258,7 @@ def parse(input, environment={}):
                 raise ValueError('Error at line %d: expected instruction in expression: "%s"' %
                                  (n, line))
             else:
-                opcode, modifier, a_mode, a_value, b_mode, b_value = m.groups()
+                opcode, modifier, a_mode, a_number, b_mode, b_number = m.groups()
 
                 if opcode.upper() not in OPCODES:
                     raise ValueError('Invalid opcode: %s in line %d: "%s"' %
@@ -247,8 +270,8 @@ def parse(input, environment={}):
                 # add parts of instruction read. the fields should be parsed
                 # as an expression in the second pass, to expand labels
                 warrior.instructions.append(Instruction(opcode, modifier,
-                                                        a_mode, a_value,
-                                                        b_mode, b_value))
+                                                        a_mode, a_number,
+                                                        b_mode, b_number))
 
             # increment code counting
             code_address += 1
@@ -269,10 +292,10 @@ def parse(input, environment={}):
         relative_labels = dict((name, address-n) for name, address in labels.iteritems())
 
         # evaluate instruction fields using global environment and labels
-        if isinstance(instruction.a_value, str):
-            instruction.a_value = eval(instruction.a_value, environment, relative_labels)
-        if isinstance(instruction.b_value, str):
-            instruction.b_value = eval(instruction.b_value, environment, relative_labels)
+        if isinstance(instruction.a_number, str):
+            instruction.a_number = eval(instruction.a_number, environment, relative_labels)
+        if isinstance(instruction.b_number, str):
+            instruction.b_number = eval(instruction.b_number, environment, relative_labels)
 
     return warrior
 
