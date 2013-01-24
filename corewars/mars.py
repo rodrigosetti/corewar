@@ -133,19 +133,19 @@ class MARS(object):
                 def do_arithmetic(op):
                     try:
                         if ir.modifier == M_A:
-                            self.core[pc + wpb].a_number = op(irb.a_number, ira.a_number)
+                            self.core[pc + wpb].a_number = op(ira.a_number, irb.a_number)
                         elif ir.modifier == M_B:
-                            self.core[pc + wpb].b_number = op(irb.b_number, ira.b_number)
+                            self.core[pc + wpb].b_number = op(ira.b_number, irb.b_number)
                         elif ir.modifier == M_AB:
-                            self.core[pc + wpb].b_number = op(irb.a_number, ira.b_number)
+                            self.core[pc + wpb].b_number = op(ira.a_number, irb.b_number)
                         elif ir.modifier == M_BA:
                             self.core[pc + wpb].a_number = op(irb.b_number, ira.a_number)
                         elif ir.modifier == M_F or ir.modifier == M_I:
-                            self.core[pc + wpb].a_number = op(irb.a_number, ira.a_number)
-                            self.core[pc + wpb].b_number = op(irb.b_number, ira.b_number)
+                            self.core[pc + wpb].a_number = op(ira.a_number, irb.a_number)
+                            self.core[pc + wpb].b_number = op(ira.b_number, irb.b_number)
                         elif ir.modifier == M_X:
-                            self.core[pc + wpb].b_number = op(irb.a_number, ira.b_number)
-                            self.core[pc + wpb].a_number = op(irb.b_number, ira.a_number)
+                            self.core[pc + wpb].b_number = op(ira.a_number, irb.b_number)
+                            self.core[pc + wpb].a_number = op(ira.b_number, irb.a_number)
                         else:
                             raise ValueError("Invalid modifier: %d" % ir.modifier)
 
