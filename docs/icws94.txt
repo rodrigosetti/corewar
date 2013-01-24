@@ -1,8 +1,261 @@
+Annotated Draft of the Proposed 1994 Core War Standard.
+
+Version 3.3
+Annotated Draft Last Modified: November 8, 1995
+Last modified by: Damien Doligez
+Base draft by: Mark Durham
+
+[Planar's intro to ver. 3.3]
+
+This is a list of what I've changed from version 3.2:
+
++ Changed "pointer counter" to "program counter" in Mark's intro.
++ Changed "A-pointer" and "B-pointer" to "A-number" and "B-number" in
+  Mark's intro
++ Added A-number indirect, A-number predecrement, and A-number
+  postincrement to the description of addressing modes.  Changed
+  "indirect", "predecrement", and "postincrement" to "B-number indirect",
+  etc.
++ Clarified the fact that newlines are not considered whitespace.
++ Added the SEQ, SNE, and NOP opcodes
++ Changed a reference to "load file" into "assembly file" in section 2.3
++ Simplified the grammar entries for label_list and newline.
++ Removed the grammar entries for list, simplified those for files.
++ Stop parsing (not simply assembling) after the END.
++ Added predefined labels.
++ Added ";assert" comment convention.
++ Specified the behaviour of {DIV,MOD}.{I,F,X} when a component of the
+  A-value is 0.
++ Fixed a discrepancy between the text and the sample code on the
+  behavior of JMN and DJN, >>>BY CHANGING THE TEXT<<<.  The old version
+  would not jump (for JMN.F and DJN.F) if either field of the target
+  was zero.
++ Added SEQ as a synonym to CMP (in description and code)
++ Added SNE (in description and code)
++ Added NOP (in description and code)
++ Specified the behavior of SLT.F
++ Fixed the bug with label "noqueue" in the ARITH_DIV macro.
++ Updated the conversion tables.
++ Updated the list of new opcodes and addressing modes.
+
+This is a list of things to do:
+
++ Decide on whether to remove read/write distance.
++ Add ROUNDS and PSPACE and LDP and STP.
++ Define "battle" and "rounds" in the glossary.
++ The assembler and run-time environment must agree on the value of
+  predefined labels.  Make this fact explicit.
++ Add CURLINE and VERSION.
++ Decide which one takes precedence if the description and code
+  disagree and write this decision explicitely in the standard.
++ Add the comparison and logical operators to the description and
+  to the grammar of expressions.
++ Specify the operator precedence for expressions (if only by saying
+  it's the same as in the C language).
++ Add multi-line EQUs and FOR/ROF macros.
+
+[Stefan's intro to ver. 3.2]
+
+The sample simulator was rewritten extensively based on suggestions by Damien
+Doligez ("Planar") and on our experience implemementing the pMARS, the first
+ICWS'94 simulator. Thanks to Planar and also Steven Morrell for pointing out
+many omission and ambiguities in the previous revision. Other readers of
+rec.games.corewar have also provided many helpful comments.
+
+Changes incorporated since last revision:
+    Text:
+        - corrected various typos
+        - clarified behaviour of JMN, JMZ and DJN with .F modifier
+        - defined behavior for division by zero
+        - incorporated EOF in grammar, eliminated "empty" expression
+        - limited definition of whitespace to <space> and <tab>
+        - labels are case sensitive
+        - "pointer counter" -> "program counter"
+        - added default modifier rules (A.2.1.1-2)
+    Sample code:
+        - macro'ized ADD/SUB/MUL/DIV code
+        - test for division by zero
+        - .AB in JMZ, JMN, DJN works now like .B; .BA like .A
+        - fixed DJN.F, JMN.F
+
+To do for next revision:
+        - fix formal grammar (still flaky)
+        - exclude/redefine read/write limits, add jump limit?
+
+[Mark's intro to ver. 3.1]
+
+The information presented here is not part of the Draft proper.  The Draft
+proper immediately follows these annotations, beginning with the line
+"0001 Draft of Proposed 1994 Core War Standard".  The content lines of the
+Draft proper are numbered for easy reference.  The numbers may or may not
+be included in the final Draft.
+
+Internal annotations were removed to clean-up the draft for presentation to
+the ICWS for comment.  These annotations which precede the draft take their
+place.
+
+Open-ended references were removed to clean-up the draft for presentation
+to the ICWS for comment.  The question of the inclusion or exclusion of
+various opcodes, modes, etc. has not been closed as of yet.  Such additions
+or deletions should be finalized by the next draft however.
+
+Previously speculative references were either included or removed to
+clean-up the draft for presentation to the ICWS for comment.  See above.
+
+The Load File section was rewritten to aid in the readability of load
+files.  It was deemed best that Load Files be a subset of Assembly Files;
+therefore Load Files should logically follow the Assembly File section.
+For that reason, the two sections have been swapped.
+
+Example MARS code is now included.  Other parts of the standard, such as
+validation, remain incomplete.  The remaining incomplete sections do not
+impact on the other sections of the standard and so can be completed even
+after consideration of the rest of the draft by the ICWS.  Alternatively,
+they could be issued as separate documents.
+
+The MARS code is specifically designed to mirror the draft as closely as
+possible.  There is a multitude of optimizations which could have been
+made but were not in order that the example code could serve as a
+possible clarification of obscure parts of the draft.  Do not suggest
+changes to the example code which speed up processing at the expense of
+mirroring the draft.
+
+Several changes have been made with the goal of expanding the flexibility
+of Core War without compromising backwards compatibility and without
+seriously altering the nature of the game.  In that vein:
+
+The modulus '%' operator was added to the Assembly File section.
+
+Read and Write limitations with folding have been clarified.  These limits
+allow the possibility of warriors essentially running in a mini-core inside
+core, folding out-of-bounds access attempts back into accessible memory.
+The main advantages to folding are: old-style bombers like Dwarf do not
+unfairly and unknowingly spend cycles doing nothing, and movement to seek
+and destroy enemy warriors is still encouraged by the limits.  The main
+disadvantage is that limits which are not factors of the size of core lead
+to unexpected results.  Example: a reference to address location -1 is
+adjusted to M-1 when loaded into core and will not fold to R-1 and/or W-1
+if R or W are not factors of M (M is size of core, R is the read limit, and
+W is the write limit).  Of course, if R = W = M, then play is equivalent
+to ICWS'88 without limits.
+
+
+In the 5.MARS section of the draft, many of the terms such as A-operand
+were used both as containers ("Writes to the A-operand") and the contents
+of those containers ("Compare the A-operand to ...").  Such ambiguous terms
+and references have hopefully been eradicated.
+
+Although such eradication eliminates ambiguity, it encourages obfuscation
+and/or the proliferation of terms.  A delicate balance has, perhaps, been
+struck between the two.
+
+The following are terms which are new or may be used differently than in
+the past.  All terms are contents (not containers).
+
+opcode modifier : Removes mode-specific behaviour from opcodes by
+        explicitly stating whether an instruction uses just one number,
+        two numbers, or a whole instruction.
+A-number : Replaces A-field/A-value/A-term, etc.  A general term, not tied
+        to any specific instruction.
+B-number : Replaces B-field/B-value/B-term, etc.  A general term, not tied
+        to any specific instruction.
+current instruction : Specifically means the instruction in the instruction
+        register.  Does NOT mean the instruction in core pointed to by the
+        program counter.  (That instruction may have changed since the
+        current instruction was copied from there).
+A-instruction : Specifically means the copy of the instruction in core (at
+        the time of A-operand evaluation) pointed to by the A-number.
+B-instruction : Specifically means the copy of the instruction in core (at
+        the time of B-operand evaluation) pointed to by the B-number.
+A-value : Now refers to the object(s) (A/B-number(s) of the A-instruction
+        or the A-instruction) referenced by the A-operand (as selected by
+        the opcode modifier).
+B-value : Now refers to the object(s) (A/B-number(s) of the B-instruction
+        or the B-instruction) referenced by the B-operand (as selected by
+        the opcode modifier).
+B-target: The object(s) (A/B-number(s) of the instruction in core [at the
+        time of opcode execution] or the instruction) pointed to by the
+        B-number.
+
+
+Six opcode modifiers have been added to the Draft.  Modifiers are appended
+to the opcodes with a dot.  Example: "MOV.A".  The modifiers are:
+
+.A      Instructions use and write A-numbers.
+.B      Instructions use and write B-numbers.
+.AB     Instructions use the A-numbers of the A-instructions and the
+                B-numbers of the B-instructions and write B-numbers.
+.BA     Instructions use the B-numbers of the A-instructions and the
+                A-numbers of the B-instructions and write A-numbers.
+.F      Instructions use both the A-numbers and the B-numbers, using and
+                writing A-to-A, B-to-B.
+.X      Instructions use both the A-numbers and the B-numbers, using and
+                writing A-to-B, B-to-A.
+.I      Instructions use and write entire instructions.
+
+See Section 5.4 for more information (especially the examples).
+
+There could be modifiers (other than .I) which take the modes into account,
+but their utility may not warrant their inclusion.
+
+The advantages of opcode modifiers include: greatly expanding the function
+of opcodes without greatly expanding the number of opcodes, separating
+opcode evaluation from operand evaluation (i.e. the behaviours of the
+opcodes no longer depend on the modes), rendering moot questions about
+whether ADD, SUB, etc. should use one or two fields (and if one field,
+whether to use the A-field or the B-field), adding versatility to the order
+of task splitting, and providing a "Skip if greater than" equivalent to
+SLT.
+
+In addition, backwards compatibility with ICWS'88 (and even ICWS'86) is
+easily accomplished at the assembly level.  Any instructions with opcodes
+without modifiers would be translated to the appropriate opcode.modifier
+pair.  Examples:
+
+"MOV #a, B", which only moves the A-field of the current instruction to the
+B-field of the instruction pointed to by B, would be translated to
+"MOV.AB #a, B".  Similarly, "MOV a, b", which moves an entire instruction
+from A to B, becomes "MOV.I a, b".  Instructions which were previously
+impossible, such as moving a B-field to an A-field, are now very
+simple and intuitive with "MOV.BA A, B".  Another example,
+"MOV.X target, target" takes the place of "XCH target", exchanging fields.
+Finally, "ADD a, b" would translate to "ADD.F a, b" for ICWS'88 and
+"ADD.B a, b" for ICWS'86.
+
+There is one negative to one opcode modifier.  ".I" only really makes sense
+for MOV and CMP.  It would be possible to define results for arithmetic
+manipulation and ordinal comparison of opcodes and modes, but it would be
+very artificial.  As an alternative, .I falls back to .F functionality (for
+opcodes other than MOV and CMP) in this document.
+
+
+Things which absolutely must be done before final consideration for
+adoption by the ICWS:
+
+        1. Complete incomplete sections or remove references to them
+        2. Add typographic distinctions to grammars
+
+To aid in completion of the draft, all suggested revisions of the draft
+should consist of explicit remarks such as:
+
+        Delete lines xxxx to yyyy
+        Add the following after line zzzz ....
+        Replace lines vvvv to wwww with ....
+
+Please individually explain why each revision is necessary.
+
+
+The maximal verbosity of the draft is intentional.  Each sentence either
+presents a new item, a clarification of an item, or an old item in a new
+context.  The goal is that no two reasonable people could arrive at
+two different interpretations of the draft.
+
+\start numbering
 0001 Draft of Proposed 1994 Core War Standard
 
-0002 Version 3.2
-0003 Draft Last Modified: February 2, 1995
-0004 Last modified by: Stephen Beitzel
+0002 Version 3.3
+0003 Draft Last Modified: November 8, 1995
+0004 Last modified by: Damien Doligez
 0005 Base draft by: Mark Durham
 
 
@@ -28,1825 +281,2063 @@
 0024                 5. Example Load File
 0025         4. Run-time Variables
 0026                 1. Purpose
-0027                 2. Variables
-0028                 3. Standard Variable Sets
-0029         5. MARS
-0030                 1. Purpose
-0031                 2. Description
-0032                 3. Address Modes
-0033                         1. Immediate
-0034                         2. Direct
-0035                         3. Indirect
-0036                         4. Predecrement Indirect
-0037                         5. Postincrement Indirect
-0038                 4. Modifiers
-0039                         1. A
-0040                         2. B
-0041                         3. AB
-0042                         4. BA
-0043                         5. F
-0044                         6. X
-0045                         7. I
-0046                 5. Instruction Set
-0047                          1. DAT
-0048                          2. MOV
-0049                          3. ADD
-0050                          4. SUB
-0051                          5. MUL
-0052                          6. DIV
-0053                          7. MOD
-0054                          8. JMP
-0055                          9. JMZ
-0056                         10. JMN
-0057                         11. DJN
-0058                         12. CMP
-0059                         13. SLT
-0060                         14. SPL
-0061                 6. Example MARS interpreter
-0062         6. Validation Suite
-0063                 1. Purpose and Requirements
-0064                 2. Assembly to Load File Test
-0065
-0066                 3. MARS Tests
-0067                          1. DAT Tests
-0068                          2. MOV Tests
-0069                          3. ADD Tests
-0070                          4. SUB Tests
-0071                          5. MUL Tests
-0072                          6. DIV Tests
-0073                          7. MOD Tests
-0074                          8. JMP Tests
-0075                          9. JMZ Tests
-0076                         10. JMN Tests
-0077                         11. DJN Tests
-0078                         12. CMP Tests
-0079                         13. SLT Tests
-0080                         14. SPL Tests
-
-0081         7. Glossary and Index
-
-0082         A. Differences Between Standards
-0083                 1. Purpose
-0084                 2. Changes
-0085                         1. Assembly Files
-0086                                 1. ICWS'88 conversion
-0087                                 2. ICWS'86 conversion
-0088                         2. Load Files
-0089                         3. MARS
-
-
-0090 1. Introduction
-
-0091 1.1 Purpose
-0092 This standard seeks to fully define and describe the game of Core War.
-
-0093 1.2 Overview
-0094 Core War is a game in which programs compete for control of a computer
-0095 called MARS (for Memory Array Redcode Simulator).  Redcode is the name
-0096 of the assembly language in which Core War programs, called warriors,
-0097 are written.
-
-0098 In order to play Core Wars, access to a Core War system is required.
-0099 A Core War system at a minimum must have a MARS executive function
-0100 (interpreter) and a way to load warriors into core (the MARS memory).
-0101 Most systems include a Redcode assembler, either separately or as part
-0102 of the loader.  Also, many systems include a graphical interface and
-0103 code debugging features.  Some systems have the ability to run
-0104 automated tournaments.
-
-0105 1.3 Acknowledgements
-0106 This document is the fourth standard for Core War, the first three
-0107 being "Core War Guidelines" (March 1984) by D. G. Jones and
-0108 A. K. Dewdney, the International Core War Society standard of 1986 -
-0109 "Core Wars" (May 1986), principally authored by Graeme McRae and the
-0110 "Core Wars Standard of 1988" (Summer 1988), principally authored by
-0111 Thomas Gettys.  The latter two standards are often referred to as
-0112 ICWS'86 and ICWS'88, respectively.
-
-0113 People who contributed to this document (in alphabetical order):
-0114         Scott W. Adkins
-0115         Mark A. Durham
-0116         Anders Ivner
-0117         Morten Due Joergensen
-0118         Paul Kline
-0119         Scott Nelson
-0120         Jon Newman
-0121         John Perry
-0122         Andy Pierce
-0123         Wayne Sheppard
-0124         William Shubert
-0125         Nandor Sieben
-0126         Stefan Strack
-0127         Mintardjo Wangsaw
-0128         Kevin Whyte
-
-
-0129 2. Redcode Assembly File Format
-
-0130 2.1 Purpose
-0131 A Redcode assembly file consists of the information necessary for a
-0132 Redcode assembler to produce a load file.  A standard assembly file
-0133 format allows programmers to exchange warriors in a more meaningful
-0134 format than load files.  An assembly file, through the use of labels,
-0135 arithmetic expressions, and macros can also greatly reduce the work
-0136 necessary to produce a particular warrior while enhancing code
-0137 readability.
-
-0138 2.2 Description
-0139 Each Redcode warrior consists of one or more lines of Redcode.  Each
-0140 line of Redcode consists of a string of alphanumerals and special
-0141 characters.  Special characters in Redcode are the addressing mode
-0142 indicators for immediate '#', direct '$', indirect '@', predecrement
-0143 indirect '<', and postincrement indirect '>' modes, the field
-0144 separator (comma) ',', the comment indicator (semicolon) ';', the
-0145 arithmetic operators for addition '+', subtraction '-', multiplication
-0146 '*', division '/', and  modulus '%', and opening '(' and closing ')'
-0147 parentheses for precedence grouping.
-
-0148 A line may be blank or consist of an instruction, a
-0149 pseudo-instruction, a comment, or an instruction or
-0150 pseudo-instruction followed by a comment.  Each line is terminated
-0151 with a newline.  All comments begin with a semicolon.  Each
-0152 instruction consists of these elements in the following order: a
-0153 label, an opcode, an A-operand, a comma, and a B-operand.  Each
-0154 element may be preceded and/or followed by whitespace other than a
-0155 newline.  The label is optional.  If either operand is blank, the
-0156 comma may be omitted.
-
-0157 Pseudo-instructions appear just like instructions but are directives
-0158 to the assembler and do not result in object code as an instruction
-0159 would.  Each pseudo-instruction has a pseudo-opcode which appears
-0160 where an opcode would appear in an instruction.  The format of the
-0161 remainder of the pseudo-instruction depends on which pseudo-opcode is
-0162 used.  For the remainder of this section (2.2) and the next (2.3),
-0163 references to "opcode" include "pseudo-opcode" assembler directives.
-
-0164 A label is any alphanumeric string other than those reserved for
-0165 opcodes.  Labels are case sensitive, i.e. "start" is different from
-0166 "Start".  An opcode is any of the following: DAT, MOV, ADD, SUB, MUL,
-0167 DIV, MOD, JMP, JMZ, JMN, DJN, CMP, SLT, or SPL.  Opcodes may be in
-0168 upper or lower case or any combination.  An opcode may be followed by
-0169 a modifier.  A modifier always begins with a dot.  A modifier is any
-0170 of the following: .A, .B, .AB, .BA, .F, .X, or .I.  Modifiers may be
-0171 in upper or lower case or any combination.
-
-0172 Each operand is blank, contains an address, or contains an addressing
-0173 mode indicator and an address.  An address consists of any number of
-0174 labels and numbers separated by arithmetic operators and possibly
-0175 grouped with parentheses.  All elements of an address may be separated
-0176 by whitespace.
-
-0177 2.3 Grammar
-0178 Tokens are separated by whitespace (space and tab) exclusive of
-0179 newline characters, which are used for line termination.  End-of-file
-0180 should occur only where newline could logically occur, otherwise the
-0181 load file has been terminated prematurely.
-
-0182 In the following, 'e' is the "empty" element, meaning the token may be
-0183 omitted, a caret '^' means NOT, an asterisk '*' immediately adjacent
-0184 means zero or more occurrences of the previous token, and a plus '+'
-0185 immediately adjacent means one or more occurrences of the previous
-0186 token.  The vertical bar '|' means OR.
-
-0187         assembly_file:
-0188                 list
-0189         list:
-0190                 line | line list
-0191         line:
-0192                 comment | instruction
-0193         comment:
-0194                 ; v* EOL | EOL
-0195         instruction:
-0196                 label_list operation mode field comment |
-0197                 label_list operation mode expr , mode expr comment
-0198         label_list:
-0199                 label | label label_list | label newline label_list | e
-0200         label:
-0201                 alpha alphanumeral*
-0202         operation:
-0203                 opcode | opcode.modifier
-0204         opcode:
-0205                 DAT | MOV | ADD | SUB | MUL | DIV | MOD |
-0206                 JMP | JMZ | JMN | DJN | CMP | SLT | SPL |
-0207                 ORG | EQU | END
-0208         modifier:
-0209                 A | B | AB | BA | F | X | I
-0210         mode:
-0211                 # | $ | @ | < | > | e
-0212         expr:
-0213                 term |
-0214                 term + expr | term - expr |
-0215                 term * expr | term / expr |
-0216                 term % expr
-0217         term:
-0218                 label | number | (expression)
-0219         number:
-0220                 whole_number | signed_integer
-0221         signed_integer:
-0222                 +whole_number | -whole_number
-0223         whole_number:
-0224                 numeral+
-0225         alpha:
-0226                 A-Z | a-z | _
-0227         numeral:
-0228                 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-0229         alphanumeral:
-0230                 alpha | numeral
-0231         v:
-0232                 ^EOL
-0233         EOL:
-0234                 newline | EOF
-0235         newline:
-0236                 LF | CR | LF CR | CR LF
-0237         e:
-
-
-0238 2.4 Assembly To Load File Conversion
-0239 A Redcode program can be assembled into a list of MARS instructions.
-0240 (When assembled to a file instead of directly to core, the list is
-0241 called a load file.  See Section 3).  Each Redcode instruction
-0242 assembles into a MARS instruction of five fields: an opcode.modifier
-0243 field, the A-mode field, the A-address field, the B-mode field, and
-0244 the B-address field.  A missing (null or blank) mode assembles as '$'
-0245 does.
-
-0246 If no modifier is present in the assembly instruction, the appropriate
-0247 modifier is appended to the opcode.  The appropriate modifier depends
-0248 upon the opcode, the modes, and which standard (ICWS'86 or ICWS'88) to
-0249 consider (ICWS'88 by default).  See Appendix A for the appropriate
-0250 translations.
-
-0251 The address field values are derived from the numbers, labels, and
-0252 arithmetic operators contained in the addresses.  Labels are
-0253 converted to an address relative to the current instruction.  Then
-0254 the arithmetic operations are carried out according to the
-0255 appropriate operator and parenthetical precedence to determine the
-0256 final value.  If there is only one operand associated with a DAT
-0257 instruction, this operand is assembled into the B-mode and B-address
-0258 fields, while #0 is assembled into the A-mode and A-address fields.
-0259 For all other instructions with only one operand, this operand is
-0260 assembled into the A-mode and A-address fields and #0 is assembled
-0261 into the B-mode and B-address fields.
-
-0262 2.5 Pseudo-instructions
-0263 Pseudo-opcodes are "ORG", "EQU", and "END".
-
-0264 "ORG" ("ORiGin") is a way for the assembly file to indicate the
-0265 logical origin of the warrior.  The A-operand contains an offset to
-0266 the logical first instruction.  Thus "ORG 0" means execution should
-0267 start with the first instruction (the default) whereas "ORG 6" means
-0268 execution should start with the seventh instruction. Although multiple
-0269 ORG instructions are of no additional benefit to the programmer, they
-0270 are allowed. When there is more than one ORG instruction in a file,
-0271 the last ORG instruction encountered will be the one that takes
-0272 effect.
-
-0273 "EQU" ("EQUate") is a simple text substitution utility.  Instructions
-0274 of the form "label EQU text" will replace all occurrences of "label"
-0275 with the (probably longer and more complicated) "text" before any
-0276 actual assembly takes place on the file.
-
-0277 "END" indicates the logical end of the assembly file.  If END has an
-0278 A-operand, then the A-operand indicates the logical origin of the
-0279 warrior in the same manner as ORG does. No instruction following END
-0280 should be assembled.
-
-
-0281 2.6 Comment Conventions
-0282 ";redcode<switch>" as a first line identifies the file as a Redcode
-0283 assembly file.  The "<switch>" is optional and implementation
-0284 dependent.
-
-0285 ";strategy <text>" indicates a comment for "public" consumption.
-
-0286 ";name <program name>", ";author <name of author(s)>",
-0287 ";version <version number>", and ";date <date of last revision>"
-0288 offer uniform ways of presenting this information.
-
-0289 ";kill <program name>" is for removing warriors from ongoing
-0290 tournaments.  If no <program name> is supplied, all of the author's
-0291 previous submissions will be removed.
-
-
-0292 2.7 Example Assembly File
-
-0293 ;redcode
-
-0294 ;name          Dwarf
-0295 ;author        A. K. Dewdney
-0296 ;version       94.1
-0297 ;date          April 29, 1993
-
-0298 ;strategy      Bombs every fourth instruction.
-
-0299         ORG     start              ; Indicates the instruction with
-0300                                    ; the label "start" should be the
-0301                                    ; first to execute.
-
-0302 step    EQU      4                 ; Replaces all occurrences of "step"
-0303                                    ; with the character "4".
-
-0304 target  DAT.F   #0,     #0         ; Pointer to target instruction.
-0305 start   ADD.AB  #step,   target    ; Increments pointer by step.
-0306         MOV.AB  #0,     @target    ; Bombs target instruction.
-0307         JMP.A    start             ; Same as JMP.A -2.  Loops back to
-0308                                    ; the instruction labelled "start".
-0309         END
-
-
-0310 3. Load File Format
-
-0311 3.1 Purpose
-0312 A load file represents the minimum amount of information necessary for
-0313 a warrior to execute properly and is presented in a very simple format
-0314 which is a subset of the assembly file format presented in Section 2.
-0315 A standard load file format allows programmers to choose assemblers
-0316 and MARS programs separately and to verify assembler performance and
-0317 MARS performance separately.  Not all Core War systems will necessarily
-0318 write load files (for example, those which assemble directly to core),
-0319 but all systems should support reading load files.
-
-0320 3.2 Description
-
-0321 Each load file will consist of one or more lines of MARS
-0322 instructions or comments.  Each line is terminated with a newline.
-0323 All comments start with with a semicolon.  Each MARS instruction
-0324 consists of five fields: an opcode.modifier pair, an A-mode, an
-0325 A-field, a B-mode, and a B-field.  The A-mode is separated from the
-0326 opcode.modifier pair by whitespace and the B-mode is separated from
-0327 the A-field by a comma and additional whitespace.  Each MARS
-0328 instruction may be followed by extraneous information, which is
-0329 ignored.  Note that the instruction format for load files is more
-0330 rigid than for assemply files to simplify parsing. No blank modes or
-0331 operands are allowed.
-
-
-0332 3.3 Grammar
-0333 Tokens are separated by whitespace (non-marking characters such as
-0334 SPACE and TAB) exclusive of newline characters, which are used for
-0335 line termination.  End-of-file should occur only where newline could
-0336 logically occur, otherwise the load file has been terminated
-0337 prematurely.
-
-0338         load_file:
-0339                 list
-0340         list:
-0341                 line | line list
-0342         line:
-0343                 comment | instruction
-0344         comment:
-0345                 ; v* EOL | EOL
-0346         instruction:
-0347                 opcode.modifier mode number , mode number comment
-0348         opcode:
-0349                 DAT | MOV | ADD | SUB | MUL | DIV | MOD |
-0350                 JMP | JMZ | JMN | DJN | CMP | SLT | SPL |
-0351                 ORG
-0352         modifier:
-0353                 A | B | AB | BA | F | X | I
-0354         mode:
-0355                 # | $ | @ | < | >
-0356         number:
-0357                 whole_number | signed_integer
-0358         signed_integer:
-0359                 +whole_number | -whole_number
-0360         whole_number:
-0361                 numeral+
-0362         numeral:
-0363                 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-0364         v:
-0365                 ^EOL
-0366         EOL:
-0367            newline | EOF
-0368         newline:
-0369            LF | CR | LF CR | CR LF
-
-
-0370 3.4 Comment Conventions
-0371 Comment conventions for load files are the same as for assembly files.
-0372 Of particular note are the "; name <program name>" and "; author
-0373 <author(s)>" comments.  These comments provide a more suitable
-0374 identification of programs to the MARS than "Warrior #1", "Warrior #2",
-0375 etc.  It also allows for less cryptic identification than by filename.
-
-
-0376 3.5 Example Load File
-0377 ;redcode
-
-0378 ;name          Dwarf
-0379 ;author        A. K. Dewdney
-0380 ;version       94.1
-0381 ;date          April 29, 1993
-
-0382 ;strategy      Bombs every fourth instruction.
-
-0383 ORG     1          ; Indicates execution begins with the second
-0384                    ; instruction (ORG is not actually loaded, and is
-0385                    ; therefore not counted as an instruction).
-
-0386 DAT.F   #0, #0     ; Pointer to target instruction.
-0387 ADD.AB  #4, $-1    ; Increments pointer by step.
-0388 MOV.AB  #0, @-2    ; Bombs target instruction.
-0389 JMP.A   $-2, #0    ; Loops back two instructions.
-
-
-0390 4. Run-time Variables
-
-0391 4.1 Purpose
-0392 This section describes those variables which are determined just prior
-0393 to running a battle by the person running the battle.  It also
-0394 enumerates some of the standardized sets of variables used for
-0395 tournaments.
-
-0396 4.2 Variables
-0397 Run-time variables consist of the following:
-
-0398 Core Size:
-0399         Core size is the number of instructions which make up core
-0400         during the battle.
-
-0401 Cycles Before Tie:
-0402         In each cycle, one instruction from each warrior is executed.
-0403         This variable determines how many cycles without a winner
-0404         should be executed before declaring a tie.
-
-0405 Initial Instruction:
-0406         The initial instruction is that instruction which is preloaded
-0407         into core prior to loading warriors.  In addition to loading
-0408         an instruction such as "DAT #0, #0" into all of core, the
-0409         initial instruction could be set to "NONE", meaning core should
-0410         not be cleared between battles, or "RANDOM", meaning core
-0411         instructions are filled with randomly generated instructions.
-
-0412 Instruction Limit:
-0413         The maximum number of instructions allowed per load file.
-
-0414 Maximum Number of Tasks:
-0415         Each warrior can spawn multiple additional tasks.  This
-0416         variable sets the maximum number of tasks allowed per warrior.
-0417         In other words, this is the size of each warrior's task queue.
-
-0418 Minimum Separation:
-0419         The minimum number of instructions from the first instruction
-0420         of one warrior to the first instruction of the next warrior.
-
-0421 Read Distance:
-0422         This is the range available for warriors to read information
-0423         from core.  Attempts to read outside the limits of this range
-0424         result in reading within the local readable range.  The range
-0425         is centered on the current instruction.  Thus, a range of
-0426         500 limits reading to offsets of (-249 -> +250) from the
-0427         currently executing instruction.  The read limit can therefore
-0428         be considered a mini-core within core.  An attempt to read
-0429         location PC+251 reads location PC-249 instead.  An attempt to
-0430         read location PC+500 reads location PC instead.
-
-0431         Read distance must be a factor of core size, otherwise the
-0432         above defined behaviour is not guaranteed.
-
-0433 Separation:
-0434         The number of instructions from the first instruction of one
-0435         warrior to the first instruction of the next warrior.
-0436         Separation can be set to "RANDOM", meaning separations will be
-0437         chosen randomly from those larger than the minimum separation.
-
-0438 Warriors:
-0439         The initial number of warriors to battle simultaneously in
-0440         core.
-
-0441 Write Distance:
-0442         This is the range available for warriors to write information
-0443         to core.  Attempts to write outside the limits of this range
-0444         result in writing within the local writable range.  The range
-0445         is centered on the current instruction.  Thus, a range of 500
-0446         limits writing to offsets of (-249 -> +250) from the
-0447         currently executing instruction.  The write limit can
-0448         therefore be considered a mini-core within core.  An attempt
-0449         to write location PC+251 writes to location PC-249 instead.
-0450         An attempt to write to location PC+500 writes to location PC
-0451         instead.
-
-0452         Write distance must be a factor of core size, otherwise the
+0027                 2. Predefined Labels
+0028                 3. Variables
+0029                 4. Standard Variable Sets
+0030         5. MARS
+0031                 1. Purpose
+0032                 2. Description
+0033                 3. Address Modes
+0034                         1. Immediate
+0035                         2. Direct
+0036                         3. A-number Indirect
+0037                         4. B-number Indirect
+0038                         5. A-number Predecrement Indirect
+0039                         6. B-number Predecrement Indirect
+0040                         7. A-number Postincrement Indirect
+0041                         8. B-number Postincrement Indirect
+0042                 4. Modifiers
+0043                         1. A
+0044                         2. B
+0045                         3. AB
+0046                         4. BA
+0047                         5. F
+0048                         6. X
+0049                         7. I
+0050                 5. Instruction Set
+0051                          1. DAT
+0052                          2. MOV
+0053                          3. ADD
+0054                          4. SUB
+0055                          5. MUL
+0056                          6. DIV
+0057                          7. MOD
+0058                          8. JMP
+0059                          9. JMZ
+0060                         10. JMN
+0061                         11. DJN
+0062                         12. SEQ and CMP
+0063                         13. SNE
+0064                         14. SLT
+0065                         15. SPL
+0066                         16. NOP
+0067                 6. Example MARS interpreter
+0068         6. Validation Suite
+0069                 1. Purpose and Requirements
+0070                 2. Tests
+0071                         1. Assembly to Load File Test
+0072                         2. MARS Tests
+0073                                  1. DAT Tests
+0074                                  2. MOV Tests
+0075                                  3. ADD Tests
+0076                                  4. SUB Tests
+0077                                  5. MUL Tests
+0078                                  6. DIV Tests
+0079                                  7. MOD Tests
+0080                                  8. JMP Tests
+0081                                  9. JMZ Tests
+0082                                 10. JMN Tests
+0083                                 11. DJN Tests
+0084                                 12. SEQ/CMP Tests
+0085                                 13. SNE Tests
+0086                                 14. SLT Tests
+0087                                 15. SPL Tests
+0088                                 16. NOP Tests
+0089         7. Glossary and Index
+
+0090         A. Differences Between Standards
+0091                 1. Purpose
+0092                 2. Changes
+0093                         1. Assembly Files
+0094                                 1. ICWS'88 conversion
+0095                                 2. ICWS'86 conversion
+0096                         2. Load Files
+0097                         3. MARS
+
+
+0098 1. Introduction
+
+0099 1.1 Purpose
+0100 This standard seeks to fully define and describe the game of Core War.
+
+0101 1.2 Overview
+0102 Core War is a game in which programs compete for control of a computer
+0103 called MARS (for Memory Array Redcode Simulator).  Redcode is the name
+0104 of the assembly language in which Core War programs, called warriors,
+0105 are written.
+
+0106 In order to play Core Wars, access to a Core War system is required.
+0107 A Core War system at a minimum must have a MARS executive function
+0108 (interpreter) and a way to load warriors into core (the MARS memory).
+0109 Most systems include a Redcode assembler, either separately or as part
+0110 of the loader.  Also, many systems include a graphical interface and
+0111 code debugging features.  Some systems have the ability to run
+0112 automated tournaments.
+
+0113 1.3 Acknowledgements
+0114 This document is the fourth standard for Core War, the first three
+0115 being "Core War Guidelines" (March 1984) by D. G. Jones and
+0116 A. K. Dewdney, the International Core War Society standard of 1986 -
+0117 "Core Wars" (May 1986), principally authored by Graeme McRae and the
+0118 "Core Wars Standard of 1988" (Summer 1988), principally authored by
+0119 Thomas Gettys.  The latter two standards are often referred to as
+0120 ICWS'86 and ICWS'88, respectively.
+
+0121 People who contributed to this document (in alphabetical order):
+0122         Scott W. Adkins
+0123         Mark A. Durham
+0124         Anders Ivner
+0125         Morten Due Joergensen
+0126         Paul Kline
+0127         Scott Nelson
+0128         Jon Newman
+0129         John Perry
+0130         Andy Pierce
+0131         Planar
+0132         Wayne Sheppard
+0133         William Shubert
+0134         Nandor Sieben
+0135         Stefan Strack
+0136         Mintardjo Wangsaw
+0137         Kevin Whyte
+
+
+0138 2. Redcode Assembly File Format
+
+0139 2.1 Purpose
+0140 A Redcode assembly file consists of the information necessary for a
+0141 Redcode assembler to produce a load file.  A standard assembly file
+0142 format allows programmers to exchange warriors in a more meaningful
+0143 format than load files.  An assembly file, through the use of labels,
+0144 arithmetic expressions, and macros can also greatly reduce the work
+0145 necessary to produce a particular warrior while enhancing code
+0146 readability.
+
+0147 2.2 Description
+0148 Each Redcode warrior consists of one or more lines of Redcode.  Each
+0149 line of Redcode consists of a string of alphanumerals and special
+0150 characters.  Special characters in Redcode are the addressing mode
+0151 indicators for immediate '#', direct '$', A-number indirect '*',
+0152 B-number indirect '@', A-number predecrement indirect '{', B-number
+0153 predecrement indirect '<', A-number postincrement indirect '}', and
+0154 B-number postincrement indirect '>' modes, the field separator
+0155 (comma) ',', the comment indicator (semicolon) ';', the arithmetic
+0156 operators for addition '+', subtraction '-', multiplication '*',
+0157 division '/', and  modulus '%', and opening '(' and closing ')'
+0158 parentheses for precedence grouping.
+
+0159 A line may be blank or consist of an instruction, a
+0160 pseudo-instruction, a comment, or an instruction or
+0161 pseudo-instruction followed by a comment.  Each line is terminated
+0162 with a newline.  All comments begin with a semicolon.  Each
+0163 instruction consists of these elements in the following order: a
+0164 label, an opcode, an A-operand, a comma, and a B-operand.  Each
+0165 element may be preceded and/or followed by whitespace (newline is
+0166 not considered whitespace).  The label is optional.  If either
+0167 operand is blank, the comma may be omitted.  The operands may not
+0168 be both blank.
+
+0169 Pseudo-instructions appear just like instructions but are directives
+0170 to the assembler and do not result in object code as an instruction
+0171 would.  Each pseudo-instruction has a pseudo-opcode which appears
+0172 where an opcode would appear in an instruction.  The format of the
+0173 remainder of the pseudo-instruction depends on which pseudo-opcode is
+0174 used.  For the remainder of this section (2.2) and the next (2.3),
+0175 references to "opcode" include "pseudo-opcode" assembler directives.
+
+0176 A label is any alphanumeric string other than those reserved for
+0177 opcodes.  Labels are case sensitive, i.e. "start" is different from
+0178 "Start".  An opcode is any of the following: DAT, MOV, ADD, SUB, MUL,
+0179 DIV, MOD, JMP, JMZ, JMN, DJN, CMP, SEQ, SNE, SLT, SPL, and NOP.
+0180 Opcodes may be in upper or lower case or any combination.  An opcode
+0181 may be followed by a modifier.  A modifier always begins with a dot.
+0182 A modifier is any of the following: .A, .B, .AB, .BA, .F, .X, or .I.
+0183 Modifiers may be in upper or lower case or any combination.
+
+0184 Each operand is blank, contains an address, or contains an addressing
+0185 mode indicator and an address.  An address consists of any number of
+0186 labels and numbers separated by arithmetic operators and possibly
+0187 grouped with parentheses.  All elements of an address may be separated
+0188 by whitespace.
+
+0189 2.3 Grammar
+0190 Tokens are separated by whitespace (space and tab) exclusive of
+0191 newline characters, which are used for line termination.  End-of-file
+0192 should occur only where newline could logically occur, otherwise the
+0193 assembly file is invalid.
+
+0194 In the following, 'e' is the "empty" element, meaning the token may be
+0195 omitted, a caret '^' means NOT, an asterisk '*' immediately adjacent
+0196 means zero or more occurrences of the previous token, and a plus '+'
+0197 immediately adjacent means one or more occurrences of the previous
+0198 token.  The vertical bar '|' means OR.
+
+0199         assembly_file:
+0200                 line+ EOF
+0201         line:
+0202                 comment | instruction
+0203         comment:
+0204                 ; v* newline | newline
+0205         instruction:
+0206                 label_list operation mode expr comment |
+0207                 label_list operation mode expr , mode expr comment
+0208         label_list:
+0209                 label newline* label_list | e
+0210         label:
+0211                 alpha alphanumeral*
+0212         operation:
+0213                 opcode | opcode.modifier
+0214         opcode:
+0215                 DAT | MOV | ADD | SUB | MUL | DIV | MOD |
+0216                 JMP | JMZ | JMN | DJN | CMP | SEQ | SNE |
+0217                 SLT | SPL | NOP | ORG | EQU | END
+0218         modifier:
+0219                 A | B | AB | BA | F | X | I
+0220         mode:
+0221                 # | $ | * | @ | { | < | } | > | e
+0222         expr:
+0223                 term |
+0224                 term + expr | term - expr |
+0225                 term * expr | term / expr |
+0226                 term % expr
+0227         term:
+0228                 label | number | ( expression )
+0229         number:
+0230                 whole_number | signed_integer
+0231         signed_integer:
+0232                 +whole_number | -whole_number
+0233         whole_number:
+0234                 numeral+
+0235         alpha:
+0236                 A-Z | a-z | _
+0237         numeral:
+0238                 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+0239         alphanumeral:
+0240                 alpha | numeral
+0241         v:
+0242                 ^newline
+0243         newline:
+0244                 LF | CR | LF CR | CR LF
+0245         e:
+
+
+0246 2.4 Assembly To Load File Conversion
+0247 A Redcode program can be assembled into a list of MARS instructions.
+0248 (When assembled to a file instead of directly to core, the list is
+0249 called a load file.  See Section 3).  Each Redcode instruction
+0250 assembles into a MARS instruction of five fields: an opcode.modifier
+0251 field, the A-mode field, the A-address field, the B-mode field, and
+0252 the B-address field.  A missing (null or blank) mode assembles as '$'
+0253 does.
+
+0254 If no modifier is present in the assembly instruction, the appropriate
+0255 modifier is appended to the opcode.  The appropriate modifier depends
+0256 upon the opcode, the modes, and which standard (ICWS'86 or ICWS'88) to
+0257 consider (ICWS'88 by default).  See Appendix A for the appropriate
+0258 translations.
+
+0259 The address field values are derived from the numbers, labels, and
+0260 arithmetic operators contained in the addresses.  Labels are
+0261 converted to an address relative to the current instruction.  Then
+0262 the arithmetic operations are carried out according to the
+0263 appropriate operator and parenthetical precedence to determine the
+0264 final value.  If there is only one operand associated with a DAT
+0265 instruction, this operand is assembled into the B-mode and B-address
+0266 fields, while #0 is assembled into the A-mode and A-address fields.
+0267 For all other instructions with only one operand, this operand is
+0268 assembled into the A-mode and A-address fields and #0 is assembled
+0269 into the B-mode and B-address fields.
+
+0270 2.5 Pseudo-instructions
+0271 Pseudo-opcodes are "ORG", "EQU", and "END".
+
+0272 "ORG" ("ORiGin") is a way for the assembly file to indicate the
+0273 logical origin of the warrior.  The A-operand contains an offset to
+0274 the logical first instruction.  Thus "ORG 0" means execution should
+0275 start with the first instruction (the default) whereas "ORG 6" means
+0276 execution should start with the seventh instruction. Although multiple
+0277 ORG instructions are of no additional benefit to the programmer, they
+0278 are allowed. When there is more than one ORG instruction in a file,
+0279 the last ORG instruction encountered will be the one that takes
+0280 effect.
+
+0281 "EQU" ("EQUate") is a simple text substitution utility.  Instructions
+0282 of the form "label EQU text" will replace all occurrences of "label"
+0283 with the (probably longer and more complicated) "text" before any
+0284 actual assembly takes place on the file.  Some labels are predefined
+0285 with the value of run-time variables as if they were defined with
+0286 EQU at the start of the program (see section 4.2 for the list of
+0287 predefined labels).
+
+0288 "END" indicates the logical end of the assembly file.  If END has an
+0289 A-operand, then the A-operand indicates the logical origin of the
+0290 warrior in the same manner as ORG does.  The rest of the file (after
+0291 the end of the line containing END) is ignored.
+
+
+0292 2.6 Comment Conventions
+0293 ";redcode<switch>" as a first line identifies the file as a Redcode
+0294 assembly file.  The "<switch>" is optional and implementation
+0295 dependent.
+
+0296 ";strategy <text>" indicates a comment for "public" consumption.
+
+0297 ";name <program name>", ";author <name of author(s)>",
+0298 ";version <version number>", and ";date <date of last revision>"
+0299 offer uniform ways of presenting this information.
+
+0300 ";kill <program name>" is for removing warriors from ongoing
+0301 tournaments.  If no <program name> is supplied, all of the author's
+0302 previous submissions will be removed.
+
+0303 ";assert <expression>" will evaluate the expression and trigger
+0304 an error if it is 0.  In conjunction with predefined labels (see
+0305 section 4.2), this provides a way of specifying the conditions under
+0306 which a warrior is supposed to run.
+
+
+0307 2.7 Example Assembly File
+
+0308 ;redcode
+
+0309 ;name          Dwarf
+0310 ;author        A. K. Dewdney
+0311 ;version       94.1
+0312 ;date          April 29, 1993
+
+0313 ;strategy      Bombs every fourth instruction.
+0314 ;assert        CORESIZE % 4 == 0
+
+0315         ORG     start              ; Indicates the instruction with
+0316                                    ; the label "start" should be the
+0317                                    ; first to execute.
+
+0318 step    EQU      4                 ; Replaces all occurrences of "step"
+0319                                    ; with the character "4".
+
+0320 target  DAT.F   #0,     #0         ; Pointer to target instruction.
+0321 start   ADD.AB  #step,   target    ; Increments pointer by step.
+0322         MOV.AB  #0,     @target    ; Bombs target instruction.
+0323         JMP.A    start             ; Same as JMP.A -2.  Loops back to
+0324                                    ; the instruction labelled "start".
+0325         END
+
+
+0326 3. Load File Format
+
+0327 3.1 Purpose
+0328 A load file represents the minimum amount of information necessary for
+0329 a warrior to execute properly and is presented in a very simple format
+0330 which is a subset of the assembly file format presented in Section 2.
+0331 A standard load file format allows programmers to choose assemblers
+0332 and MARS programs separately and to verify assembler performance and
+0333 MARS performance separately.  Not all Core War systems will necessarily
+0334 write load files (for example, those which assemble directly to core),
+0335 but all systems should support reading load files.
+
+0336 3.2 Description
+
+0337 Each load file will consist of one or more lines of MARS
+0338 instructions or comments.  Each line is terminated with a newline.
+0339 All comments start with with a semicolon.  Each MARS instruction
+0340 consists of five fields: an opcode.modifier pair, an A-mode, an
+0341 A-field, a B-mode, and a B-field.  The A-mode is separated from the
+0342 opcode.modifier pair by whitespace and the B-mode is separated from
+0343 the A-field by a comma and additional whitespace.  Each MARS
+0344 instruction may be followed by extraneous information, which is
+0345 ignored.  Note that the instruction format for load files is more
+0346 rigid than for assembly files to simplify parsing. No blank modes or
+0347 operands are allowed.
+
+
+0348 3.3 Grammar
+0349 Tokens are separated by whitespace (non-marking characters such as
+0350 SPACE and TAB) exclusive of newline characters, which are used for
+0351 line termination.  End-of-file should occur only where newline could
+0352 logically occur, otherwise the load file is invalid.
+
+0353         load_file:
+0354                 line+ EOF
+0355         line:
+0356                 comment | instruction
+0357         comment:
+0358                 ; v* newline | newline
+0359         instruction:
+0360                 opcode.modifier mode number , mode number comment
+0361         opcode:
+0362                 DAT | MOV | ADD | SUB | MUL | DIV | MOD |
+0363                 JMP | JMZ | JMN | DJN | CMP | SEQ | SNE |
+0364                 SLT | SPL | NOP | ORG
+0365         modifier:
+0366                 A | B | AB | BA | F | X | I
+0367         mode:
+0368                 # | $ | @ | * | < | { | > | }
+0369         number:
+0370                 whole_number | signed_integer
+0371         signed_integer:
+0372                 +whole_number | -whole_number
+0373         whole_number:
+0374                 numeral+
+0375         numeral:
+0376                 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+0377         v:
+0378                 ^newline
+0379         newline:
+0380            LF | CR | LF CR | CR LF
+
+
+0381 3.4 Comment Conventions
+0382 Comment conventions for load files are the same as for assembly files.
+0383 Of particular note are the "; name <program name>" and "; author
+0384 <author(s)>" comments.  These comments provide a more suitable
+0385 identification of programs to the MARS than "Warrior #1", "Warrior #2",
+0386 etc.  It also allows for less cryptic identification than by filename.
+
+
+0387 3.5 Example Load File
+0388 ;redcode
+
+0389 ;name          Dwarf
+0390 ;author        A. K. Dewdney
+0391 ;version       94.1
+0392 ;date          April 29, 1993
+
+0393 ;strategy      Bombs every fourth instruction.
+0394 ;assert        CORESIZE % 4 == 0
+
+0395 ORG     1          ; Indicates execution begins with the second
+0396                    ; instruction (ORG is not actually loaded, and is
+0397                    ; therefore not counted as an instruction).
+
+0398 DAT.F   #0, #0     ; Pointer to target instruction.
+0399 ADD.AB  #4, $-1    ; Increments pointer by step.
+0400 MOV.AB  #0, @-2    ; Bombs target instruction.
+0401 JMP.A   $-2, #0    ; Loops back two instructions.
+
+
+0402 4. Run-time Variables
+
+0403 4.1 Purpose
+0404 This section describes those variables which are determined just prior
+0405 to running a battle by the person running the battle.  It also
+0406 enumerates some of the standardized sets of variables used for
+0407 tournaments.
+
+0408 4.2 Predefined Labels
+0409 Most of the run-time variables are available to the programmer as
+0410 predefined labels.  The purpose of these labels is twofold: first,
+0411 to parameterize the warriors with the characteristics of their
+0412 run-time environment; second, to check (with the ";assert" comment)
+0413 that the warrior is run in an environment that makes sense for it.
+
+0414 The next section gives a list of the run-time variables.  When
+0415 a predefined label takes the value of the variable, the label is
+0416 given between parentheses after the name of the variable.
+
+0417 4.2 Variables
+0418 Run-time variables consist of the following:
+
+0419 Core Size: (CORESIZE)
+0420         Core size is the number of instructions which make up core
+0421         during the battle.
+
+0422 Cycles Before Tie: (MAXCYCLES)
+0423         In each cycle, one instruction from each warrior is executed.
+0424         This variable determines how many cycles without a winner
+0425         should be executed before declaring a tie.
+
+0426 Initial Instruction:
+0427         The initial instruction is that instruction which is preloaded
+0428         into core prior to loading warriors.  In addition to loading
+0429         an instruction such as "DAT #0, #0" into all of core, the
+0430         initial instruction could be set to "NONE", meaning core should
+0431         not be cleared between battles, or "RANDOM", meaning core
+0432         instructions are filled with randomly generated instructions.
+
+0433 Instruction Limit: (MAXLENGTH)
+0434         The maximum number of instructions allowed per load file.
+
+0435 Maximum Number of Tasks: (MAXPROCESSES)
+0436         Each warrior can spawn multiple additional tasks.  This
+0437         variable sets the maximum number of tasks allowed per warrior.
+0438         In other words, this is the size of each warrior's task queue.
+
+0439 Minimum Separation: (MINDISTANCE)
+0440         The minimum number of instructions from the first instruction
+0441         of one warrior to the first instruction of the next warrior.
+
+0442 Read Distance:
+0443         This is the range available for warriors to read information
+0444         from core.  Attempts to read outside the limits of this range
+0445         result in reading within the local readable range.  The range
+0446         is centered on the current instruction.  Thus, a range of
+0447         500 limits reading to offsets of (-249 -> +250) from the
+0448         currently executing instruction.  The read limit can therefore
+0449         be considered a mini-core within core.  An attempt to read
+0450         location PC+251 reads location PC-249 instead.  An attempt to
+0451         read location PC+500 reads location PC instead.
+
+0452         Read distance must be a factor of core size, otherwise the
 0453         above defined behaviour is not guaranteed.
 
-
-0454 4.3 Standard Variable Sets
-0455 ICWS86:
-0456         Core Size:                      8192
-0457         Cycles Before Tie:              100000
-0458         Initial Instruction:            DAT.F #0, #0
-0459         Instruction Limit:              300
-0460         Maximum Number of Tasks:        64
-0461         Minimum Separation:             300
-0462         Read Distance:                  8192
-0463         Separation:                     RANDOM
-0464         Warriors:                       2
-0465         Write Distance:                 8192
-
-0466 KOTH:
-0467         Core Size:                      8000
-0468         Cycles Before Tie:              80000
-0469         Initial Instruction:            DAT.F $0, $0
-0470         Instruction Limit:              100
-0471         Maximum Number of Tasks:        8000
-0472         Minimum Separation:             100
-0473         Read Distance:                  8000
-0474         Separation:                     RANDOM
-0475         Warriors:                       2
-0476         Write Distance:                 8000
-
-
-0477 5. MARS
-
-0478 5.1 Purpose
-0479 The Memory Array Redcode Simulator (MARS) is the computer in which
-0480 Core War warriors do combat.
-
-0481 5.2 Description
-0482 A minimally-complete MARS consists of a core, a loader, task queues,
-0483 the MARS executive function, and a way to present the final results of
-0484 a battle.  Additionally, many MARS provide a "real-time" battle
-0485 display and various debugging tools.
-
-0486 The core consists of a cyclic list (0, 1, 2, ..., M-2, M-1, 0, 1, ...)
-0487 of M MARS instructions.  The integer M is referred to as "core size".
-0488 All operations are performed modulo M.  Core initialization (the
-0489 initial instructions placed in core before loading warriors) is a
-0490 run-time variable (see Section 4).
-
-0491 The loader loads warriors into core, converting all negative field
-0492 values N to positive field values P such that 0 <= P < M and P = kM
-0493 + N for some integer k.  Subsequently, all field values G greater
-0494 than or equal to M are converted to field values L = G modulo M.
-0495 The loader also initializes each warrior's task queue with the
-0496 appropriate task pointer.
-
-0497 There is a task queue for each warrior loaded into core.  Each task
-0498 queue can hold a limited number of task pointers.  The "task limit"
-0499 (number of tasks an individual warrior's task queue can hold) is a
-0500 run-time variable.  The task queues are FIFOs (First In, First Out).
-
-0501 Each warrior consists of one task initially.  Subsequent tasks are
-0502 added to the warrior's task queue using the SPL instruction.
-0503 Attempted execution of a DAT instruction by a task effectively removes
-0504 that task from the warrior's task queue.
-
-0505 Warriors execute for a specified number of cycles ("time limit", see
-0506 Section 4) or until only one warrior is still executing, whichever
-0507 occurs first.  Each cycle, one instruction from each warrior is
-0508 executed.  The instruction to execute is the instruction pointed to by
-0509 the next task pointer in the warrior's task queue.  A warrior is no
-0510 longer executing when its task queue is empty.
-
-0511 The following expressions are used in describing the MARS executive
-0512 function's operation.
-
-0513 General Definitions:
-0514    An instruction consists of an opcode, a modifier, an A-operand,
-0515            and a B-operand.
-0516    An A-operand consists of an A-mode and an A-number.
-0517    An A-mode is the addressing mode of an A-operand.
-0518    An A-number is an integer between 0 and M-1, inclusive.
-0519    A B-operand consists of a B-mode and a B-number.
-0520    A B-mode is the addressing mode of a B-operand.
-0521    A B-number is an integer between 0 and M-1, inclusive.
-
-0522 Specific Definitions:
-0523    The program counter (PC) is the pointer to the location in core of
-0524            the instruction fetched from core to execute.
-0525    The current instruction is the instruction in the instruction
-0526            register, as copied (prior to execution) from the PC
-0527            location of core.
-0528    The A-pointer points to the instruction the A-operand of the
-0529            current instruction references in core.
-0530    The A-instruction is a copy of the instruction the A-pointer
-0531            points to in core (as it was during operand evaluation).
-0532    The A-value is the A-number and/or the B-number of the
-0533            A-instruction or the A-instruction itself, whichever are/is
-0534            selected by the opcode modifier.
-0535    The B-pointer points to the instruction the B-operand of the
-0536            current instruction references in core.
-0537    The B-instruction is a copy of the instruction the B-pointer
-0538            points to in core (as it was during operand evaluation).
-0539    The B-value is the A-number and/or the B-number of the
-0540            B-instruction or the B-instruction itself, whichever are/is
-0541            selected by the opcode modifier.
-0542    The B-target is the A-number and/or the B-number of the instruction
-0543            pointed to by the B-pointer or the instruction itself,
-0544            whichever are/is selected by the opcode modifier.
-
-0545 All MARS instructions are executed following the same procedure:
-0546 1. The currently executing warrior's current task pointer is
-0547    extracted from the warrior's task queue and assigned to the
-0548    program counter.
-0549 2. The corresponding instruction is fetched from core and stored in
-0550    the instruction register as the current instruction.
-0551 3. The A-operand of the current instruction is evaluated.
-0552 4. The results of A-operand evaluation, the A-pointer and the
-0553    A-instruction, are stored in the appropriate registers.
-0554 5. The B-operand of the current instruction is evaluated.
-0555 6. The results of B-operand evaluation, the B-pointer and the
-0556    B-instruction, are stored in the appropriate registers.
-0557 7. Operations appropriate to the opcode.modifier pair in the
-0558    instruction register are executed.  With the exception of DAT
-0559    instructions, all operations queue an updated task pointer.
-0560    (How the task pointer is updated and when it is queued depend on
-0561    instruction execution).
-
-0562 All pointers are PC-relative, indicating the offset from the source of
-0563 the current instruction to the desired location.  All arithmetic is to
-0564 be done modulo M, with negative values converted in the same manner as
-0565 during loading as discussed above (P = M + N).  Additionally, all
-0566 reads of core are done modulo the read limit (R) and all writes of
-0567 core are done modulo the write limit (W).  Read offsets O greater than
-0568 R/2 from the current instruction are converted to backwards offsets of
-0569 O = O - R.  A comparable conversion occurs for write offsets greater
-0570 than W/2.
-
-
-0571 5.3 Address Modes
-
-0572 5.3.1 Immediate
-0573 An immediate mode operand merely serves as storage for data.  An
-0574 immediate A/B-mode in the current instruction sets the A/B-pointer to
-0575 zero.
-
-0576 5.3.2 Direct
-0577 A direct mode operand indicates the offset from the program counter.
-0578 A direct A/B-mode in the current instruction means the A/B-pointer is
-0579 a copy of the offset, the A/B-number of the current instruction.
-
-0580 5.3.3 Indirect
-0581 An indirect mode operand indicates the primary offset (relative to the
-0582 program counter) to the secondary offset (relative to the location
-0583 of the instruction in which the secondary offset is contained).  An
-0584 indirect A/B-mode indicates that the A/B-pointer is the sum of the
-0585 A/B-number of the current instruction (the primary offset) and the
-0586 B-number of the instruction pointed to by the A/B-number of the
-0587 current instruction (the secondary offset).
-
-0588 5.3.4 Predecrement Indirect
-0589 A predecrement indirect mode operand indicates the primary offset
-0590 (relative to the program counter) to the secondary offset (relative to
-0591 the location of the instruction in which the secondary offset is
-0592 contained) which is decremented prior to use.  A predecrement
-0593 indirect A/B-mode indicates that the A/B-pointer is the sum of the
-0594 A/B-number of the current instruction (the primary offset) and the
-0595 decremented B-number of the instruction pointed to by the A/B-number
-0596 of the current instruction (the secondary offset).
-
-0597 5.3.5 Postincrement Indirect
-
-0598 A postincrement indirect mode operand indicates the primary offset
-0599 (relative to the program counter) to the secondary offset (relative to
-0600 the location of the instruction in which the secondary offset is
-0601 contained) which is incremented after the results of the operand
-0602 evaluation are stored.  A postincrement indirect A/B-mode indicates that
-0603 the A/B-pointer is the sum of the A/B-number of the current instruction
-0604 (the primary offset) and the B-number of the instruction pointed to by
-0605 the A/B-number of the current instruction (the secondary offset).  The
-0606 B-number of the instruction pointed to by the A/B-number of the current
-0607 instruction is incremented after the A/B-instruction is stored, but
-0608 before the B-operand is evaluated (for post-increment A-mode), or
-0609 the operation is executed (for post-increment indirect B-mode).
-
-
-0610 5.4 Modifiers
-
-0611 5.4.1 A
-0612 Instruction execution proceeds with the A-value set to the A-number of
-0613 the A-instruction and the B-value set to the A-number of the
-0614 B-instruction.  A write to core replaces the A-number of the
-0615 instruction pointed to by the B-pointer.
-
-0616 For example, a CMP.A instruction would compare the A-number of the
-0617 A-instruction with the A-number of the B-instruction.  A MOV.A
-0618 instruction would replace the A-number of the instruction pointed to
-0619 by the B-pointer with the A-number of the A-instruction.
-
-0620 5.4.2 B
-0621 Instruction execution proceeds with the A-value set to the B-number of
-0622 the A-instruction and the B-value set to the B-number of the
-0623 B-instruction.  A write to core replaces the B-number of the
-0624 instruction pointed to by the B-pointer.
-
-0625 For example, a CMP.B instruction would compare the B-number of the
-0626 A-instruction with the B-number of the B-instruction.  A MOV.B
-0627 instruction would replace the B-number of the instruction pointed to
-0628 by the B-pointer with the B-number of the A-instruction.
-
-0629 5.4.3 AB
-0630 Instruction execution proceeds with the A-value set to the A-number of
-0631 the A-instruction and the B-value set to the B-number of the
-0632 B-instruction.  A write to core replaces the B-number of the
-0633 instruction pointed to by the B-pointer.
-
-0634 For example, a CMP.AB instruction would compare the A-number of the
-0635 A-instruction with the B-number of the B-instruction.  A MOV.AB
-0636 instruction would replace the B-number of the instruction pointed to
-0637 by the B-pointer with the A-number of the A-instruction.
-
-0638 5.4.4 BA
-0639 Instruction execution proceeds with the A-value set to the B-number of
-0640 the A-instruction and the B-value set to the A-number of the
-0641 B-instruction.  A write to core replaces the A-number of the
-0642 instruction pointed to by the B-pointer.
-
-0643 For example, a CMP.BA instruction would compare the B-number of the
-0644 A-instruction with the A-number of the B-instruction.  A MOV.BA
-0645 instruction would replace the A-number of the instruction pointed to
-0646 by the B-pointer with the B-number of the A-instruction.
-
-0647 5.4.5 F
-0648 Instruction execution proceeds with the A-value set to both the
-0649 A-number and B-number of the A-instruction (in that order) and the
-0650 B-value set to both the A-number and B-number of the B-instruction
-0651 (also in that order).  A write to core replaces both the A-number and
-0652 the B-number of the instruction pointed to by the B-pointer (in that
-0653 order).
-
-0654 For example, a CMP.F instruction would compare the A-number of the
-0655 A-instruction to the A-number of the B-instruction and the B-number of
-0656 the A-instruction to B-number of the B-instruction.  A MOV.F instruction
-0657 would replace the A-number of the instruction pointed to by the
-0658 B-pointer with the A-number of the A-instruction and would also replace
-0659 the B-number of the instruction pointed to by the B-pointer with the
-0660 B-number of the A-instruction.
-
-0661 5.4.6 X
-0662 Instruction execution proceeds with the A-value set to both the
-0663 A-number and B-number of the A-instruction (in that order) and the
-0664 B-value set to both the B-number and A-number of the B-instruction
-0665 (in that order).  A write to to core replaces both the B-number and
-0666 the A-number of the instruction pointed to by the B-pointer (in that
-0667 order).
-
-0668 For example, a CMP.X instruction would compare the A-number of the
-0669 A-instruction to the B-number of the B-instruction and the B-number of the
-0670 A-instruction to A-number of the B-instruction.  A MOV.X instruction would
-0671 replace the B-number of the instruction pointed to by the B-pointer with the
-0672 A-number of the A-instruction and would also replace the A-number of the
-0673 instruction pointed to by the B-pointer with the B-number of the
-0674 A-instruction.
-
-0675 5.4.7 I
-0676 Instruction execution proceeds with the A-value set to the
-0677 A-instruction and the B-value set to the B-instruction.  A write to
-0678 core replaces the entire instruction pointed to by the B-pointer.
-
-0679 For example, a CMP.I instruction would compare the A-instruction to
-0680 the B-instruction.  A MOV.I instruction would replace the instruction
-0681 pointed to by the B-pointer with the A-instruction.
-
-
-0682 5.5 Instruction Set
-
-0683 5.5.1 DAT
-0684 No additional processing takes place.  This effectively removes the
-0685 current task from the current warrior's task queue.
-
-0686 5.5.2 MOV
-0687 Move replaces the B-target with the A-value and queues the next
-0688 instruction (PC + 1).
-
-0689 5.5.3 ADD
-0690 ADD replaces the B-target with the sum of the A-value and the B-value
-0691 (A-value + B-value) and queues the next instruction (PC + 1).  ADD.I
-0692 functions as ADD.F would.
-
-0693 5.5.4 SUB
-0694 SUB replaces the B-target with the difference of the B-value and the
-0695 A-value (B-value - A-value) and queues the next instruction (PC + 1).
-0696 SUB.I functions as SUB.F would.
-
-0697 5.5.5 MUL
-0698 MUL replaces the B-target with the product of the A-value and the
-0699 B-value (A-value * B-value) and queues the next instruction (PC + 1).
-0700 MUL.I functions as MUL.F would.
-
-0701 5.5.6 DIV
-0702 DIV replaces the B-target with the integral result of dividing the
-0703 B-value by the A-value (B-value / A-value) and queues the next
-0704 instruction (PC + 1).  DIV.I functions as DIV.F would. If the
-0705 A-value is zero, the B-value is unchanged and the current task is
-0706 removed from the warrior's task queue.
-
-0707 5.5.7 MOD
-0708 MOD replaces the B-target with the integral remainder of dividing the
-0709 B-value by the A-value (B-value % A-value) and queues the next
-0710 instruction (PC + 1).  MOD.I functions as MOD.F would. If the
-0711 A-value is zero, the B-value is unchanged and the current task is
-0712 removed from the warrior's task queue.
-
-0713 5.5.8 JMP
-0714 JMP queues the sum of the program counter and the A-pointer.
-
-0715 5.5.9 JMZ
-0716 JMZ tests the B-value to determine if it is zero.  If the B-value is
-0717 zero, the sum of the program counter and the A-pointer is queued.
-0718 Otherwise, the next instruction is queued (PC + 1).  JMZ.I functions
-0719 as JMZ.F would, i.e. it jumps if both the A-number and the B-number
-0720 of the B-instruction are zero.
-
-0721 5.5.10 JMN
-0722 JMN tests the B-value to determine if it is zero.  If the B-value is
-0723 not zero, the sum of the program counter and the A-pointer is queued.
-0724 Otherwise, the next instruction is queued (PC + 1).  JMN.I functions
-0725 as JMN.F would, i.e. it jumps if both the A-number and the B-number
-0726 of the B-instruction are non-zero. This is not the negation of the
-0727 condition for JMZ.F.
-
-0728 5.5.11 DJN
-0729 DJN decrements the B-value and the B-target, then tests the B-value
-0730 to determine if it is zero.  If the decremented B-value is not zero,
-0731 the sum of the program counter and the A-pointer is queued.
-0732 Otherwise, the next instruction is queued (PC + 1).  DJN.I functions
-0733 as DJN.F would, i.e. it decrements both both A/B-numbers of the B-value
-0734 and the B-target, and jumps if both A/B-numbers of the B-value are
-0735 non-zero.
-
-0736 5.5.12 CMP
-0737 CMP compares the A-value to the B-value.  If the result of the
-0738 comparison is equal, the instruction after the next instruction
-0739 (PC + 2) is queued (skipping the next instruction).  Otherwise, the
-0740 the next instruction is queued (PC + 1).
-
-0741 5.5.13 SLT
-0742 SLT compares the A-value to the B-value.  If the A-value is less than
-0743 the B-value, the instruction after the next instruction (PC + 2) is
-0744 queued (skipping the next instruction).  Otherwise, the next
-0745 instruction is queued (PC + 1).  SLT.I functions as SLT.F would.
-
-0746 5.5.14 SPL
-0747 SPL queues the next instruction (PC + 1) and then queues the sum of
-0748 the program counter and A-pointer. If the queue is full, only the
-0749 next instruction is queued.
-
-
-0750 5.6 Example MARS Interpreter
-
-0751 /************************************/
-0752 /*                                  */
-0753 /*            EMI94.c               */
-0754 /*                                  */
-0755 /* Execute MARS Instruction ala     */
-0756 /* ICWS'94 Draft Standard.          */
-0757 /*                                  */
-0758 /* Last Update: February 2, 94      */
-0759 /*                                  */
-0760 /************************************/
-
-0761 /* This ANSI C function is the benchmark MARS instruction   */
-0762 /* interpreter for the ICWS'94 Draft Standard.              */
-
-
-0763 /* The design philosophy of this function is to mirror the  */
-0764 /* standard as closely as possible, illuminate the meaning  */
-0765 /* of the standard, and provide the definitive answers to   */
-0766 /* questions of the "well, does the standard mean this or   */
-0767 /* that?" variety.  Although other, different implemen-     */
-0768 /* tations are definitely possible and encouraged; those    */
-0769 /* implementations should produce the same results as this  */
-0770 /* one does.                                                */
-
-
-0771 /* The function returns the state of the system.  What the  */
-0772 /* main program does with this information is not defined   */
-0773 /* by the standard.                                         */
-
-0774 enum SystemState {
-0775    UNDEFINED,
-0776    SUCCESS
-0777 };
-
-
-0778 /* Any number of warriors may be executing in core at one   */
-0779 /* time, depending on the run-time variable set and how     */
-0780 /* many warriors have failed during execution.  For this    */
-0781 /* implementation, warriors are identified by the order in  */
-0782 /* which they were loaded into core.                        */
-
-0783 typedef unsigned int Warrior;
-
-
-0784 /* An Address in Core War can be any number from 0 to the   */
-0785 /* size of core minus one, relative to the current          */
-0786 /* instruction.  In this implementation, core is an array   */
-0787 /* of instructions; therefore any variable types which      */
-0788 /* contain an Address can be considered to be of type       */
-0789 /* unsigned int.  One caveat: for the purposes of this      */
-0790 /* standard, unsigned int must be considered to have no     */
-0791 /* upper limit.  Depending on the size of core, it may be   */
-0792 /* necessary to take precautions against overflow.          */
-
-0793 typedef unsigned int Address;
-
-
-0794 /* The FIFO task queues and supporting functions are not    */
-0795 /* presented.   The function Queue() attempts to add a task */
-0796 /* pointer to the back of the currently executing warrior's */
-0797 /* task queue.  No special actions are to be taken if       */
-0798 /* Queue() is unsuccessful, which it will be if the warrior */
-0799 /* has already reached the task limit (maximum allowable    */
-0800 /* number of tasks).                                        */
-
-0801 extern void Queue(
-0802    Warrior  W,
-0803    Address  TaskPointer
-0804 );
-
-
-0805 /* There is one support function used to limit the range of */
-0806 /* reading from Core and writing to Core relative to the    */
-0807 /* current instruction.  Behaviour is as expected (a small  */
-0808 /* core within Core) only if the limits are factors of the  */
-0809 /* size of Core.                                            */
-
-0810 static Address Fold(
-0811    Address  pointer,    /* The pointer to fold into the desired range.  */
-0812    Address  limit,      /* The range limit.                             */
-0813    Address  M           /* The size of Core.                            */
-0814 ) {
-0815    Address  result;
-
-0816    result = pointer % limit;
-0817    if ( result > (limit/2) ) {
-0818       result += M - limit;
-0819    };
-0820    return(result);
-0821 }
-
-
-0822 /* Instructions are the principle data type.  Core is an    */
-0823 /* array of instructions, and there are three instruction   */
-0824 /* registers used by the MARS executive.                    */
-
-0825 enum Opcode {
-0826    DAT,
-0827    MOV,
-0828    ADD,
-0829    SUB,
-0830    MUL,
-0831    DIV,
-0832    MOD,
-0833    JMP,
-0834    JMZ,
-0835    JMN,
-0836    DJN,
-0837    CMP,
-0838    SLT,
-0839    SPL
-0840 };
-
-0841 enum Modifier {
-0842    A,
-0843    B,
-0844    AB,
-0845    BA,
-0846    F,
-0847    X,
-0848    I
-0849 };
-
-0850 enum Mode {
-0851    IMMEDIATE,
-0852    DIRECT,
-0853    INDIRECT,
-0854    DECREMENT,
-0855    INCREMENT
-0856 };
-
-0857 typedef struct Instruction {
-0858    enum Opcode    Opcode;
-0859    enum Modifier  Modifier;
-0860    enum Mode      AMode;
-0861    Address        ANumber;
-0862    enum Mode      BMode;
-0863    Address        BNumber;
-0864 } Instruction;
-
-
-0865 /* The function is passed which warrior is currently        */
-0866 /* executing, the address of the warrior's current task's   */
-0867 /* current instruction, a pointer to the Core, the size of  */
-0868 /* the Core, and the read and write limits.  It returns the */
-0869 /* system's state after attempting instruction execution.   */
-
-0870 enum SystemState EMI94(
-
-0871 /* W indicates which warrior's code is executing.           */
-
-0872    Warrior  W,
-
-0873 /* PC is the address of this warrior's current task's       */
-0874 /* current instruction.                                     */
-
-0875    Address  PC,
-
-0876 /* Core is just an array of Instructions.  Core has been    */
-0877 /* initialized and the warriors have been loaded before     */
-0878 /* calling this function.                                   */
-
-0879    Instruction Core[],
-
-0880 /* M is the size of Core.                                   */
-
-0881    Address     M,
-
-0882 /* ReadLimit is the limitation on read distances.           */
-
-0883    Address     ReadLimit,
-
-0884 /* WriteLimit is the limitation on write distances.         */
-
-0885    Address     WriteLimit
-
-
-0886 ) {
-
-
-0887 /* This MARS stores the currently executing instruction in  */
-0888 /* the instruction register IR.                             */
-
-0889    Instruction IR;
-
-0890 /* This MARS stores the instruction referenced by the       */
-0891 /* A-operand in instruction register IRA.                   */
-
-0892    Instruction IRA;
-
-0893 /* This MARS stores the instruction referenced by the       */
-0894 /* B-operand in statement_Register IRB.                     */
-
-0895    Instruction IRB;
-
-0896 /* All four of the following pointers are PC-relative       */
-0897 /* (relative to the Program Counter).  Actual access of     */
-0898 /* core must add-in the Program Counter (mod core size).    */
-
-0899 /* The offset to the instruction referred to by the         */
-0900 /* A-operand for reading is Read Pointer A (RPA).           */
-
-0901    Address     RPA;
-
-0902 /* The offset to the instruction referred to by the         */
-0903 /* A-operand for writing is Write Pointer A (WPA).          */
-
-0904    Address     WPA;
-
-0905 /* The offset to the instruction referred to by the         */
-0906 /* B-operand for reading is Read Pointer B (RPB).           */
-
-0907    Address     RPB;
-
-0908 /* The offset to the instruction referred to by the         */
-0909 /* A-operand for writing is Write Pointer B (WPB).          */
-
-0910    Address     WPB;
-
-0911 /* Post-increment operands need to keep track of which      */
-0912 /* instruction to increment.                                */
-
-0913    Address     PIP;
-
-0914 /* Before execution begins, the current instruction is      */
-0915 /* copied into the Instruction Register.                    */
-
-0916    IR = Core[PC];
-
-
-0917 /* Next, the A-operand is completely evaluated.             */
-
-0918 /* For instructions with an Immediate A-mode, the Pointer A */
-0919 /* points to the source of the current instruction.         */
-
-0920    if (IR.AMode == IMMEDIATE) {
-0921       RPA = WPA = 0;
-0922    } else {
-
-0923 /* For instructions with a Direct A-mode, the Pointer A     */
-0924 /* points to the instruction IR.ANumber away, relative to   */
-0925 /* the Program Counter.                                     */
-0926 /* Note that implementing Core as an array necessitates     */
-0927 /* doing all Address arithmetic modulus the size of Core.   */
-
-0928       RPA = Fold(IR.ANumber, ReadLimit, M);
-0929       WPA = Fold(IR.ANumber, WriteLimit, M);
-
-0930 /* For instructions with indirection in the A-operand       */
-0931 /* (Indirect, Pre-decrement, and Post-increment A-modes):    */
-
-0932       if (IR.AMode != DIRECT) {
-
-0933 /* For instructions with Pre-decrement A-mode, the B-Field  */
-0934 /* of the instruction in Core currently pointed to by the   */
-0935 /* Pointer A is decremented (M - 1 is added).               */
-
-0936          if (IR.AMode == DECREMENT) {
-0937             Core[((PC + WPA) % M)].BNumber =
-0938                (Core[((PC + WPA) % M)].BNumber + M - 1) % M;
-0939          };
-
-0940 /* For instructions with Post-increment A-mode, the B-Field  */
-0941 /* of the instruction in Core currently pointed to by the   */
-0942 /* Pointer A will be incremented.                           */
-
-0943          if (IR.AMode == INCREMENT) {
-0944             PIP = (PC + WPA) % M;
-0945          };
-
-0946 /* For instructions with indirection in the A-operand,      */
-0947 /* Pointer A ultimately points to the instruction           */
-0948 /* Core[((PC + PCA) % M)].BNumber away, relative to the     */
-0949 /* instruction pointed to by Pointer A.                     */
-
-0950          RPA = Fold(
-0951             (RPA + Core[((PC + RPA) % M)].BNumber), ReadLimit, M
-0952          );
-0953          WPA = Fold(
-0954             (WPA + Core[((PC + WPA) % M)].BNumber), WriteLimit, M
-0955          );
-
-0956       };
-0957    };
-
-0958 /* The Instruction Register A is a copy of the instruction  */
-0959 /* pointed to by Pointer A.                                 */
-
-0960    IRA = Core[((PC + RPA) % M)];
-
-0961 /* If the A-mode was post-increment, now is the time to     */
-0962 /* increment the instruction in core.                       */
-
-0963    if (IR.AMode == INCREMENT) {
-0964            Core[PIP].BNumber = (Core[PIP].BNumber + 1) % M;
-0965            };
-
-0966 /* The Pointer B and the Instruction Register B are         */
-0967 /* evaluated in the same manner as their A counterparts.    */
-
-0968    if (IR.BMode == IMMEDIATE) {
-0969       RPB = WPB = 0;
-0970    } else {
-0971       RPB = Fold(IR.BNumber, ReadLimit, M);
-0972       WPB = Fold(IR.BNumber, WriteLimit, M);
-0973       if (IR.BMode != DIRECT) {
-0974          if (IR.BMode == DECREMENT) {
-0975             Core[((PC + WPB) % M)].BNumber =
-0976                (Core[((PC + WPB) % M)].BNumber + M - 1) % M
-0977             ;
-0978          } else if (IR.BMode == INCREMENT) {
-0979             PIP = (PC + WPB) % M;
-0980          };
-0981          RPB = Fold(
-0982             (RPB + Core[((PC + RPB) % M)].BNumber), ReadLimit, M
-0983          );
-0984          WPB = Fold(
-0985             (WPB + Core[((PC + WPB) % M)].BNumber), WriteLimit, M
-0986          );
-0987       };
-0988    };
-0989    IRB = Core[((PC + RPB) % M)];
-
-0990    if (IR.BMode == INCREMENT) {
-0991            Core[PIP].BNumber = (Core[PIP].BNumber + 1) % M;
-0992            };
-
-0993 /* Execution of the instruction can now proceed.            */
-
-0994    switch (IR.Opcode) {
-
-0995 /* Instructions with a DAT opcode have no further function. */
-0996 /* The current task's Program Counter is not updated and is */
-0997 /* not returned to the task queue, effectively removing the */
-0998 /* task.                                                    */
-
-0999    case DAT:
-1000       break;
-
-
-1001 /* MOV replaces the B-target with the A-value and queues    */
-1002 /* the next instruction.                                    */
-
-1003    case MOV:
-1004       switch (IR.Modifier) {
-
-1005 /* Replaces A-number with A-number.                         */
-
-1006       case A:
-1007          Core[((PC + WPB) % M)].ANumber = IRA.ANumber;
-1008          break;
-
-1009 /* Replaces B-number with B-number.                         */
-
-1010       case B:
-1011          Core[((PC + WPB) % M)].BNumber = IRA.BNumber;
-1012          break;
-
-1013 /* Replaces B-number with A-number.                         */
-
-1014       case AB:
-1015          Core[((PC + WPB) % M)].BNumber = IRA.ANumber;
-1016          break;
-
-1017 /* Replaces A-number with B-number.                         */
-
-1018       case BA:
-1019          Core[((PC + WPB) % M)].ANumber = IRA.BNumber;
-1020          break;
-
-1021 /* Replaces A-number with A-number and B-number with        */
-1022 /* B-number.                                                */
-
-1023       case F:
-1024          Core[((PC + WPB) % M)].ANumber = IRA.ANumber;
-1025          Core[((PC + WPB) % M)].BNumber = IRA.BNumber;
-1026          break;
-
-1027 /* Replaces B-number with A-number and A-number with        */
-1028 /* B-number.                                                */
-
-1029       case X:
-1030          Core[((PC + WPB) % M)].BNumber = IRA.ANumber;
-1031          Core[((PC + WPB) % M)].ANumber = IRA.BNumber;
-1032          break;
-
-1033 /* Copies entire instruction.                               */
-
-1034       case I:
-1035          Core[((PC + WPB) % M)] = IRA;
-1036          break;
-
-1037       default:
-1038          return(UNDEFINED);
-1039          break;
-1040       };
-
-1041 /* Queue up next instruction.                               */
-1042       Queue(W, ((PC + 1) % M));
-1043       break;
-
-1044 /* Arithmetic instructions replace the B-target with the    */
-1045 /* "op" of the A-value and B-value, and queue the next      */
-1046 /* instruction.  "op" can be the sum, the difference, or    */
-1047 /* the product.                                             */
-
-1048 #define ARITH(op) \
-1049       switch (IR.Modifier) { \
-1050       case A: \
-1051          Core[((PC + WPB) % M)].ANumber = \
-1052             (IRB.ANumber op IRA.ANumber) % M \
-1053          ; \
-1054          break; \
-1055       case B: \
-1056          Core[((PC + WPB) % M)].BNumber = \
-1057             (IRB.BNumber op IRA.BNumber) % M \
-1058          ; \
-1059          break; \
-1060       case AB: \
-1061          Core[((PC + WPB) % M)].BNumber = \
-1062             (IRB.ANumber op IRA.BNumber) % M \
-1063          ; \
-1064          break; \
-1065       case BA: \
-1066          Core[((PC + WPB) % M)].ANumber = \
-1067             (IRB.BNumber op IRA.ANumber) % M \
-1068          ; \
-1069          break; \
-1070       case F: \
-1071       case I: \
-1072          Core[((PC + WPB) % M)].ANumber = \
-1073             (IRB.ANumber op IRA.ANumber) % M \
-1074          ; \
-1075          Core[((PC + WPB) % M)].BNumber = \
-1076             (IRB.BNumber op IRA.BNumber) % M \
-1077          ; \
-1078          break; \
-1079       case X: \
-1080          Core[((PC + WPB) % M)].BNumber = \
-1081             (IRB.ANumber op IRA.BNumber) % M \
-1082          ; \
-1083          Core[((PC + WPB) % M)].ANumber = \
-1084             (IRB.BNumber op IRA.ANumber) % M \
-1085          ; \
-1086          break; \
-1087       default: \
-1088          return(UNDEFINED); \
-1089          break; \
-1090       }; \
-1091       Queue(W, ((PC + 1) % M)); \
-1092       break;
-
-1093    case ADD: ARITH(+)
-1094    case SUB: ARITH(+ M -)
-1095    case MUL: ARITH(*)
-
-1096 /* DIV and MOD replace the B-target with the integral       */
-1097 /* quotient (for DIV) or remainder (for MOD) of the B-value */
-1098 /* by the A-value, and queues the next instruction.         */
-1099 /* Process is removed from task queue if A-value is zero    */
-
-1100 #define ARITH_DIV(op) \
-1101       switch (IR.Modifier) { \
-1102       case A: \
-1103          if (IRA.ANumber != 0) \
-1104             Core[((PC + WPB) % M)].ANumber = IRB.ANumber op IRA.ANumber; \
-1105          break; \
-1106       case B: \
-1107          if (IRA.BNumber != 0) \
-1108             Core[((PC + WPB) % M)].BNumber = IRB.BNumber op IRA.BNumber; \
-1109          else goto noqueue; \
-1110          break; \
-1111       case AB: \
-1112          if (IRA.ANumber != 0) \
-1113             Core[((PC + WPB) % M)].BNumber = IRB.BNumber op IRA.ANumber; \
-1114          else goto noqueue; \
-1115          break; \
-1116       case BA: \
-1117          if (IRA.BNumber != 0) \
-1118             Core[((PC + WPB) % M)].ANumber = IRB.ANumber op IRA.BNumber; \
-1119          else goto noqueue; \
-1120          break; \
-1121       case F: \
-1122       case I: \
-1123          if (IRA.ANumber != 0) \
-1124             Core[((PC + WPB) % M)].ANumber = IRB.ANumber op IRA.ANumber; \
-1125          if (IRA.BNumber != 0) \
-1126             Core[((PC + WPB) % M)].BNumber = IRB.BNumber op IRA.BNumber; \
-1127          if ((IRA.ANumber == 0) || (IRA.BNumber == 0)) \
-1128             goto noqueue; \
-1129          break; \
-1130       case X: \
-1131          if (IRA.ANumber != 0) \
-1132             Core[((PC + WPB) % M)].BNumber = IRB.BNumber op IRA.ANumber; \
-1133          if (IRA.BNumber != 0) \
-1134             Core[((PC + WPB) % M)].ANumber = IRB.ANumber op IRA.BNumber; \
-1135          if ((IRA.ANumber == 0) || (IRA.BNumber == 0)) \
-1136             goto noqueue; \
-1137          break; \
-1138       default: \
-1139          return(UNDEFINED); \
-1140          break; \
-1141       }; \
-1142       Queue(W, ((PC + 1) % M)); \
-1143       noqueue: \
-1144       break;
-
-1145    case DIV: ARITH_DIV(/)
-1146    case MOD: ARITH_DIV(%)
-
-1147 /* JMP queues the sum of the Program Counter and the        */
-1148 /* A-pointer.                                               */
-
-1149    case JMP:
-1150       Queue(W, RPA);
-1151       break;
-
-
-1152 /* JMZ queues the sum of the Program Counter and Pointer A  */
-1153 /* if the B-value is zero.  Otherwise, it queues the next   */
-1154 /* instruction.                                             */
-
-1155    case JMZ:
-1156       switch (IR.Modifier) {
-1157       case A:
-1158       case BA:
-1159          if (IRB.ANumber == 0) {
-1160             Queue(W, RPA);
-1161          } else {
-1162             Queue(W, ((PC + 1) % M));
-1163          };
-1164          break;
-1165       case B:
-1166       case AB:
-1167          if (IRB.BNumber == 0) {
-1168             Queue(W, RPA);
-1169          } else {
-1170             Queue(W, ((PC + 1) % M));
-1171          };
-1172          break;
-1173       case F:
-1174       case X:
-1175       case I:
-1176          if ( (IRB.ANumber == 0) && (IRB.BNumber == 0) ) {
-1177             Queue(W, RPA);
-1178          } else {
-1179             Queue(W, ((PC + 1) % M));
-1180          };
-1181          break;
-1182       default:
-1183          return(UNDEFINED);
-1184          break;
-1185       };
-1186       break;
-
-
-1187 /* JMN queues the sum of the Program Counter and Pointer A  */
-1188 /* if the B-value is not zero.  Otherwise, it queues the    */
-1189 /* next instruction.                                        */
-
-1190    case JMN:
-1191       switch (IR.Modifier) {
-1192       case A:
-1193       case BA:
-1194          if (IRB.ANumber != 0) {
-1195             Queue(W, RPA);
-1196          } else {
-1197             Queue(W, ((PC + 1) % M));
-1198          };
-1199          break;
-1200       case B:
-1201       case AB:
-1202          if (IRB.BNumber != 0) {
-1203             Queue(W, RPA);
-1204          } else {
-1205             Queue(W, ((PC + 1) % M));
-1206          };
-1207          break;
-1208       case F:
-1209       case X:
-1210       case I:
-1211          if ( (IRB.ANumber != 0) || (IRB.BNumber != 0) ) {
-1212             Queue(W, RPA);
-1213          } else {
-1214             Queue(W, ((PC + 1) % M));
-1215          };
-1216          break;
-1217       default:
-1218          return(UNDEFINED);
-1219          break;
-1220       };
-1221       break;
-
-
-1222 /* DJN (Decrement Jump if Not zero) decrements the B-value  */
-1223 /* and the B-target, then tests if the B-value is zero.  If */
-1224 /* the result is not zero, the sum of the Program Counter   */
-1225 /* and Pointer A is queued.  Otherwise, the next            */
-1226 /* instruction is queued.                                   */
-
-1227    case DJN:
-1228       switch (IR.Modifier) {
-1229       case A:
-1230       case BA:
-1231          Core[((PC + WPB) % M)].ANumber =
-1232             (Core[((PC + WPB) % M)].ANumber + M - 1) % M
-1233          ;
-1234          IRB.ANumber -= 1;
-1235          if (IRB.ANumber != 0) {
-1236             Queue(W, RPA);
-1237          } else {
-1238             Queue(W, ((PC + 1) % M));
-1239          };
-1240          break;
-1241       case B:
-1242       case AB:
-1243          Core[((PC + WPB) % M)].BNumber =
-1244             (Core[((PC + WPB) % M)].BNumber + M - 1) % M
-1245          ;
-1246          IRB.BNumber -= 1;
-1247          if (IRB.BNumber != 0) {
-1248             Queue(W, RPA);
-1249          } else {
-1250             Queue(W, ((PC + 1) % M));
-1251          };
-1252          break;
-1253       case F:
-1254       case X:
-1255       case I:
-1256          Core[((PC + WPB) % M)].ANumber =
-1257             (Core[((PC + WPB) % M)].ANumber + M - 1) % M
-1258          ;
-1259          IRB.ANumber -= 1;
-1260          Core[((PC + WPB) % M)].BNumber =
-1261             (Core[((PC + WPB) % M)].BNumber + M - 1) % M
-1262          ;
-1263          IRB.BNumber -= 1;
-1264          if ( (IRB.ANumber != 0) || (IRB.BNumber != 0) ) {
-1265             Queue(W, RPA);
-1266          } else {
-1267             Queue(W, ((PC + 1) % M));
-1268          };
-1269          break;
-1270       default:
-1271          return(UNDEFINED);
-1272          break;
-1273       };
-1274       break;
-
-
-1275 /* CMP compares the A-value and the B-value. If there are   */
-1276 /* no differences, then the instruction after the next      */
-1277 /* instruction is queued.  Otherwise, the next instrution   */
-1278 /* is queued.                                               */
-
-1279    case CMP:
-1280       switch (IR.Modifier) {
-1281       case A:
-1282          if (IRA.ANumber == IRB.ANumber) {
-1283             Queue(W, ((PC + 2) % M));
-1284          } else {
-1285             Queue(W, ((PC + 1) % M));
-1286          };
-1287          break;
-1288       case B:
-1289          if (IRA.BNumber == IRB.BNumber) {
-1290             Queue(W, ((PC + 2) % M));
-1291          } else {
-1292             Queue(W, ((PC + 1) % M));
-1293          };
-1294          break;
-1295       case AB:
-1296          if (IRA.ANumber == IRB.BNumber) {
-1297             Queue(W, ((PC + 2) % M));
-1298          } else {
-1299             Queue(W, ((PC + 1) % M));
-1300          };
-1301          break;
-1302       case BA:
-1303          if (IRA.BNumber == IRB.ANumber) {
-1304             Queue(W, ((PC + 2) % M));
+0454 Separation:
+0455         The number of instructions from the first instruction of one
+0456         warrior to the first instruction of the next warrior.
+0457         Separation can be set to "RANDOM", meaning separations will be
+0458         chosen randomly from those larger than the minimum separation.
+
+0459 Warriors:
+0460         The initial number of warriors to battle simultaneously in
+0461         core.
+
+0462 Write Distance:
+0463         This is the range available for warriors to write information
+0464         to core.  Attempts to write outside the limits of this range
+0465         result in writing within the local writable range.  The range
+0466         is centered on the current instruction.  Thus, a range of 500
+0467         limits writing to offsets of (-249 -> +250) from the
+0468         currently executing instruction.  The write limit can
+0469         therefore be considered a mini-core within core.  An attempt
+0470         to write location PC+251 writes to location PC-249 instead.
+0471         An attempt to write to location PC+500 writes to location PC
+0472         instead.
+
+0473         Write distance must be a factor of core size, otherwise the
+0474         above defined behaviour is not guaranteed.
+
+
+0475 4.3 Standard Variable Sets
+0476 ICWS86:
+0477         Core Size:                      8192
+0478         Cycles Before Tie:              100000
+0479         Initial Instruction:            DAT.F #0, #0
+0480         Instruction Limit:              300
+0481         Maximum Number of Tasks:        64
+0482         Minimum Separation:             300
+0483         Read Distance:                  8192
+0484         Separation:                     RANDOM
+0485         Warriors:                       2
+0486         Write Distance:                 8192
+
+0487 KOTH:
+0488         Core Size:                      8000
+0489         Cycles Before Tie:              80000
+0490         Initial Instruction:            DAT.F $0, $0
+0491         Instruction Limit:              100
+0492         Maximum Number of Tasks:        8000
+0493         Minimum Separation:             100
+0494         Read Distance:                  8000
+0495         Separation:                     RANDOM
+0496         Warriors:                       2
+0497         Write Distance:                 8000
+
+
+0498 5. MARS
+
+0499 5.1 Purpose
+0500 The Memory Array Redcode Simulator (MARS) is the computer in which
+0501 Core War warriors do combat.
+
+0502 5.2 Description
+0503 A minimally-complete MARS consists of a core, a loader, task queues,
+0504 the MARS executive function, and a way to present the final results of
+0505 a battle.  Additionally, many MARS provide a "real-time" battle
+0506 display and various debugging tools.
+
+0507 The core consists of a cyclic list (0, 1, 2, ..., M-2, M-1, 0, 1, ...)
+0508 of M MARS instructions.  The integer M is referred to as "core size".
+0509 All operations are performed modulo M.  Core initialization (the
+0510 initial instructions placed in core before loading warriors) is a
+0511 run-time variable (see Section 4).
+
+0512 The loader loads warriors into core, converting each negative field
+0513 value N to the positive field value P such that 0 <= P < M and P = kM
+0514 + N where k is a positive integer (P = N modulo M).  Each field value
+0515 G greater than or equal to M is converted to the field values L such
+0516 that 0 <= L < M and L = kM + G where k is a negative integer (L = G
+0517 modulo M).  The loader also initializes each warrior's task queue with
+0518 the appropriate task pointer.
+
+0519 There is a task queue for each warrior loaded into core.  Each task
+0520 queue can hold a limited number of task pointers.  The "task limit"
+0521 (number of tasks an individual warrior's task queue can hold) is a
+0522 run-time variable.  The task queues are FIFOs (First In, First Out).
+
+0523 Each warrior consists of one task initially.  Subsequent tasks are
+0524 added to the warrior's task queue using the SPL instruction. Attempted
+0525 execution of a DAT instruction by a task effectively removes that task
+0526 from the warrior's task queue.
+
+0527 Warriors execute for a specified number of cycles ("time limit", see
+0528 Section 4) or until only one warrior is still executing, whichever
+0529 occurs first.  Each cycle, one instruction from each warrior is
+0530 executed.  The instruction to execute is the instruction pointed to by
+0531 the next task pointer in the warrior's task queue.  A warrior is no
+0532 longer executing when its task queue is empty.
+
+0533 The following expressions are used in describing the MARS executive
+0534 function's operation.
+
+0535 General Definitions:
+0536    An instruction consists of an opcode, a modifier, an A-operand,
+0537            and a B-operand.
+0538    An A-operand consists of an A-mode and an A-number.
+0539    An A-mode is the addressing mode of an A-operand.
+0540    An A-number is an integer between 0 and M-1, inclusive.
+0541    A B-operand consists of a B-mode and a B-number.
+0542    A B-mode is the addressing mode of a B-operand.
+0543    A B-number is an integer between 0 and M-1, inclusive.
+
+0544 Specific Definitions:
+0545    The program counter (PC) is the pointer to the location in core of
+0546            the instruction fetched from core to execute.
+0547    The current instruction is the instruction in the instruction
+0548            register, as copied (prior to execution) from the PC
+0549            location of core.
+0550    The A-pointer points to the instruction the A-operand of the
+0551            current instruction references in core.
+0552    The A-instruction is a copy of the instruction the A-pointer
+0553            points to in core (as it was during operand evaluation).
+0554    The A-value is the A-number and/or the B-number of the
+0555            A-instruction or the A-instruction itself, whichever are/is
+0556            selected by the opcode modifier.
+0557    The B-pointer points to the instruction the B-operand of the
+0558            current instruction references in core.
+0559    The B-instruction is a copy of the instruction the B-pointer
+0560            points to in core (as it was during operand evaluation).
+0561    The B-value is the A-number and/or the B-number of the
+0562            B-instruction or the B-instruction itself, whichever are/is
+0563            selected by the opcode modifier.
+0564    The B-target is the A-number and/or the B-number of the instruction
+0565            pointed to by the B-pointer or the instruction itself,
+0566            whichever are/is selected by the opcode modifier.
+
+0567 All MARS instructions are executed following the same procedure:
+0568 1. The currently executing warrior's current task pointer is
+0569    extracted from the warrior's task queue and assigned to the
+0570    program counter.
+0571 2. The corresponding instruction is fetched from core and stored in
+0572    the instruction register as the current instruction.
+0573 3. The A-operand of the current instruction is evaluated.
+0574 4. The results of A-operand evaluation, the A-pointer and the
+0575    A-instruction, are stored in the appropriate registers.
+0576 5. The B-operand of the current instruction is evaluated.
+0577 6. The results of B-operand evaluation, the B-pointer and the
+0578    B-instruction, are stored in the appropriate registers.
+0579 7. Operations appropriate to the opcode.modifier pair in the
+0580    instruction register are executed.  With the exception of DAT
+0581    instructions, all operations queue an updated task pointer.
+0582    (How the task pointer is updated and when it is queued depend on
+0583    instruction execution).
+
+0584 All pointers are PC-relative, indicating the offset from the source of
+0585 the current instruction to the desired location.  All arithmetic is to
+0586 be done modulo M, with negative values converted in the same manner as
+0587 during loading as discussed above (P = M + N).  Additionally, all
+0588 reads of core are done modulo the read limit (R) and all writes of
+0589 core are done modulo the write limit (W).  Read offsets O greater than
+0590 R/2 from the current instruction are converted to backwards offsets of
+0591 O = O - R.  A comparable conversion occurs for write offsets greater
+0592 than W/2.
+
+
+0593 5.3 Address Modes
+
+0594 5.3.1 Immediate
+0595 An immediate mode operand merely serves as storage for data.  An
+0596 immediate A/B-mode in the current instruction sets the A/B-pointer to
+0597 zero.
+
+0598 5.3.2 Direct
+0599 A direct mode operand indicates the offset from the program counter.
+0600 A direct A/B-mode in the current instruction means the A/B-pointer is
+0601 a copy of the offset, the A/B-number of the current instruction.
+
+0602 5.3.3 A-number Indirect
+0603 An A-number indirect mode operand indicates the primary offset
+0604 (relative to the program counter) to the secondary offset (relative to
+0605 the location of the instruction in which the secondary offset is
+0606 contained).  An A-number indirect A/B-mode indicates that the
+0607 A/B-pointer is the sum of the A/B-number of the current instruction
+0608 (the primary offset) and the A-number of the instruction pointed to by
+0609 the A/B-number of the current instruction (the secondary offset).
+
+0610 5.3.4 B-number Indirect
+0611 A B-number indirect mode operand indicates the primary offset
+0612 (relative to the program counter) to the secondary offset (relative to
+0613 the location of the instruction in which the secondary offset is
+0614 contained).  A B-number indirect A/B-mode indicates that the
+0615 A/B-pointer is the sum of the A/B-number of the current instruction
+0616 (the primary offset) and the B-number of the instruction pointed to by
+0617 the A/B-number of the current instruction (the secondary offset).
+
+0618 5.3.5 A-number Predecrement Indirect
+0619 An A-number predecrement indirect mode operand indicates the primary
+0620 offset (relative to the program counter) to the secondary offset
+0621 (relative to the location of the instruction in which the secondary
+0622 offset is contained) which is decremented prior to use.  An A-number
+0623 predecrement indirect A/B-mode indicates that the A/B-pointer is the
+0624 sum of the A/B-number of the current instruction (the primary offset)
+0625 and the decremented A-number of the instruction pointed to by the
+0626 A/B-number of the current instruction (the secondary offset).
+
+0627 5.3.6 B-number Predecrement Indirect
+0628 A B-number predecrement indirect mode operand indicates the primary
+0629 offset (relative to the program counter) to the secondary offset
+0630 (relative to the location of the instruction in which the secondary
+0631 offset is contained) which is decremented prior to use.  A B-number
+0632 predecrement indirect A/B-mode indicates that the A/B-pointer is the
+0633 sum of the A/B-number of the current instruction (the primary offset)
+0634 and the decremented B-number of the instruction pointed to by the
+0635 A/B-number of the current instruction (the secondary offset).
+
+0636 5.3.7 A-number Postincrement Indirect
+0637 An A-number postincrement indirect mode operand indicates the primary
+0638 offset (relative to the program counter) to the secondary offset
+0639 (relative to the location of the instruction in which the secondary
+0640 offset is contained) which is incremented after the results of the
+0641 operand evaluation are stored.  An A-number postincrement indirect
+0642 A/B-mode indicates that the A/B-pointer is the sum of the A/B-number of
+0643 the current instruction (the primary offset) and the A-number of the
+0644 instruction pointed to by the A/B-number of the current instruction
+0645 (the secondary offset).  The A-number of the instruction pointed to by
+0646 the A/B-number of the current instruction is incremented after the
+0647 A/B-instruction is stored, but before the B-operand is evaluated (for
+0648 A-number postincrement indirect A-mode), or the operation is executed
+0649 (for A-number postincrement indirect B-mode).
+
+0650 5.3.8 B-number Postincrement Indirect
+0651 A B-number postincrement indirect mode operand indicates the primary
+0652 offset (relative to the program counter) to the secondary offset
+0653 (relative to the location of the instruction in which the secondary
+0654 offset is contained) which is incremented after the results of the
+0655 operand evaluation are stored.  A B-number postincrement indirect
+0656 A/B-mode indicates that the A/B-pointer is the sum of the A/B-number of
+0657 the current instruction (the primary offset) and the B-number of the
+0658 instruction pointed to by the A/B-number of the current instruction
+0659 (the secondary offset).  The B-number of the instruction pointed to by
+0660 the A/B-number of the current instruction is incremented after the
+0661 A/B-instruction is stored, but before the B-operand is evaluated (for
+0662 B-number postincrement indirect A-mode), or the operation is executed
+0663 (for B-number postincrement indirect B-mode).
+
+
+0664 5.4 Modifiers
+
+0665 5.4.1 A
+0666 Instruction execution proceeds with the A-value set to the A-number of
+0667 the A-instruction and the B-value set to the A-number of the
+0668 B-instruction.  A write to core replaces the A-number of the
+0669 instruction pointed to by the B-pointer.
+
+0670 For example, a CMP.A instruction would compare the A-number of the
+0671 A-instruction with the A-number of the B-instruction.  A MOV.A
+0672 instruction would replace the A-number of the instruction pointed to
+0673 by the B-pointer with the A-number of the A-instruction.
+
+0674 5.4.2 B
+0675 Instruction execution proceeds with the A-value set to the B-number of
+0676 the A-instruction and the B-value set to the B-number of the
+0677 B-instruction.  A write to core replaces the B-number of the
+0678 instruction pointed to by the B-pointer.
+
+0679 For example, a CMP.B instruction would compare the B-number of the
+0680 A-instruction with the B-number of the B-instruction.  A MOV.B
+0681 instruction would replace the B-number of the instruction pointed to
+0682 by the B-pointer with the B-number of the A-instruction.
+
+0683 5.4.3 AB
+0684 Instruction execution proceeds with the A-value set to the A-number of
+0685 the A-instruction and the B-value set to the B-number of the
+0686 B-instruction.  A write to core replaces the B-number of the
+0687 instruction pointed to by the B-pointer.
+
+0688 For example, a CMP.AB instruction would compare the A-number of the
+0689 A-instruction with the B-number of the B-instruction.  A MOV.AB
+0690 instruction would replace the B-number of the instruction pointed to
+0691 by the B-pointer with the A-number of the A-instruction.
+
+0692 5.4.4 BA
+0693 Instruction execution proceeds with the A-value set to the B-number of
+0694 the A-instruction and the B-value set to the A-number of the
+0695 B-instruction.  A write to core replaces the A-number of the
+0696 instruction pointed to by the B-pointer.
+
+0697 For example, a CMP.BA instruction would compare the B-number of the
+0698 A-instruction with the A-number of the B-instruction.  A MOV.BA
+0699 instruction would replace the A-number of the instruction pointed to
+0700 by the B-pointer with the B-number of the A-instruction.
+
+0701 5.4.5 F
+0702 Instruction execution proceeds with the A-value set to both the
+0703 A-number and B-number of the A-instruction (in that order) and the
+0704 B-value set to both the A-number and B-number of the B-instruction
+0705 (also in that order).  A write to core replaces both the A-number and
+0706 the B-number of the instruction pointed to by the B-pointer (in that
+0707 order).
+
+0708 For example, a CMP.F instruction would compare the A-number of the
+0709 A-instruction to the A-number of the B-instruction and the B-number of
+0710 the A-instruction to B-number of the B-instruction.  A MOV.F
+0711 instruction would replace the A-number of the instruction pointed to by
+0712 the B-pointer with the A-number of the A-instruction and would also
+0713 replace the B-number of the instruction pointed to by the B-pointer
+0714 with the B-number of the A-instruction.
+
+0715 5.4.6 X
+0716 Instruction execution proceeds with the A-value set to both the
+0717 A-number and B-number of the A-instruction (in that order) and the
+0718 B-value set to both the B-number and A-number of the B-instruction
+0719 (in that order).  A write to to core replaces both the B-number and
+0720 the A-number of the instruction pointed to by the B-pointer (in that
+0721 order).
+
+0722 For example, a CMP.X instruction would compare the A-number of the
+0723 A-instruction to the B-number of the B-instruction and the B-number of the
+0724 A-instruction to A-number of the B-instruction.  A MOV.X instruction
+0725 would replace the B-number of the instruction pointed to by the
+0726 B-pointer with the A-number of the A-instruction and would also replace
+0727 the A-number of the instruction pointed to by the B-pointer with the
+0728 B-number of the A-instruction.
+
+0729 5.4.7 I
+0730 Instruction execution proceeds with the A-value set to the
+0731 A-instruction and the B-value set to the B-instruction.  A write to
+0732 core replaces the entire instruction pointed to by the B-pointer.
+
+0733 For example, a CMP.I instruction would compare the A-instruction to
+0734 the B-instruction.  A MOV.I instruction would replace the instruction
+0735 pointed to by the B-pointer with the A-instruction.
+
+
+0736 5.5 Instruction Set
+
+0737 5.5.1 DAT
+0738 No additional processing takes place.  This effectively removes the
+0739 current task from the current warrior's task queue.
+
+0740 5.5.2 MOV
+0741 Move replaces the B-target with the A-value and queues the next
+0742 instruction (PC + 1).
+
+0743 5.5.3 ADD
+0744 ADD replaces the B-target with the sum of the A-value and the B-value
+0745 (A-value + B-value) and queues the next instruction (PC + 1).  ADD.I
+0746 functions as ADD.F would.
+
+0747 5.5.4 SUB
+0748 SUB replaces the B-target with the difference of the B-value and the
+0749 A-value (B-value - A-value) and queues the next instruction (PC + 1).
+0750 SUB.I functions as SUB.F would.
+
+0751 5.5.5 MUL
+0752 MUL replaces the B-target with the product of the A-value and the
+0753 B-value (A-value * B-value) and queues the next instruction (PC + 1).
+0754 MUL.I functions as MUL.F would.
+
+0755 5.5.6 DIV
+0756 DIV replaces the B-target with the integral result of dividing the
+0757 B-value by the A-value (B-value / A-value) and queues the next
+0758 instruction (PC + 1).  DIV.I functions as DIV.F would. If the
+0759 A-value is zero, the B-value is unchanged and the current task is
+0760 removed from the warrior's task queue.  DIV.I, DIV.F, and DIV.X
+0761 operate on pairs of operands.  If either component of the A-value
+0762 is zero, the corresponding component of the B-value is unchanged
+0763 (the other component is divided normally), and the current task is
+0764 removed from the warrior queue.
+
+0765 5.5.7 MOD
+0766 MOD replaces the B-target with the integral remainder of dividing the
+0767 B-value by the A-value (B-value % A-value) and queues the next
+0768 instruction (PC + 1).  MOD.I functions as MOD.F would. If the
+0769 A-value is zero, the B-value is unchanged and the current task is
+0770 removed from the warrior's task queue.  MOD.I, MOD.F, and MOD.X
+0771 operate on pairs of operands.  If either component of the A-value
+0772 is zero, the corresponding component of the B-value is unchanged
+0773 (the other component is divided normally), and the current task is
+0774 removed from the warrior queue.
+
+0775 5.5.8 JMP
+0776 JMP queues the sum of the program counter and the A-pointer.
+
+0777 5.5.9 JMZ
+0778 JMZ tests the B-value to determine if it is zero.  If the B-value is
+0779 zero, the sum of the program counter and the A-pointer is queued.
+0780 Otherwise, the next instruction is queued (PC + 1).  JMZ.I functions
+0781 as JMZ.F would, i.e. it jumps if both the A-number and the B-number
+0782 of the B-instruction are zero.
+
+0783 5.5.10 JMN
+0784 JMN tests the B-value to determine if it is zero.  If the B-value is
+0785 not zero, the sum of the program counter and the A-pointer is queued.
+0786 Otherwise, the next instruction is queued (PC + 1).  JMN.I functions
+0787 as JMN.F would, i.e. it jumps if the A-number or the B-number of the
+0788 B-instruction (or both) is non-zero. This is the negation of the
+0789 condition for JMZ.F.
+
+0790 5.5.11 DJN
+0791 DJN decrements the B-value and the B-target, then tests the B-value
+0792 to determine if it is zero.  If the decremented B-value is not zero,
+0793 the sum of the program counter and the A-pointer is queued.
+0794 Otherwise, the next instruction is queued (PC + 1).  DJN.I functions
+0795 as DJN.F would, i.e. it decrements both both A/B-numbers of the B-value
+0796 and the B-target, and jumps if one (or both) of the A/B-numbers of the
+0797 B-value is non-zero.
+
+0798 5.5.12 SEQ and CMP
+0799 SEQ and CMP are synonymous opcodes.  SEQ is provided as an
+0800 easy-to-remember mnemonic, and CMP is provided for backward
+0801 compatibility.  They are completely equivalent.  SEQ (or CMP) compares
+0802 the A-value to the B-value.  If the result of the comparison is equal,
+0803 the instruction after the next instruction (PC + 2) is queued (skipping
+0804 the next instruction).  Otherwise, the next instruction is queued
+0805 (PC + 1).
+
+0806 5.5.13 SNE
+0807 SNE compares the A-value to the B-value.  If the result of the
+0808 comparison is not equal, the instruction after the next instruction
+0809 (PC + 2) is queued (skipping the next instruction).  Otherwise, the
+0810 next instruction is queued (PC + 1).
+
+0811 5.5.14 SLT
+0812 SLT compares the A-value to the B-value.  If the A-value is less than
+0813 the B-value, the instruction after the next instruction (PC + 2) is
+0814 queued (skipping the next instruction).  Otherwise, the next
+0815 instruction is queued (PC + 1).  SLT.I functions as SLT.F would, i.e.
+0816 the next instruction is skipped only if each of the A/B-numbers of the
+0817 A-value is less than its B-value counterpart.
+
+0818 5.5.15 SPL
+0819 SPL queues the next instruction (PC + 1) and then queues the sum of
+0820 the program counter and the A-pointer. If the queue is full, only the
+0821 next instruction is queued.
+
+0822 5.5.16 NOP
+0823 NOP queues the next instruction (PC + 1).
+
+
+0824 5.6 Example MARS Interpreter
+
+0825 /************************************/
+0826 /*                                  */
+0827 /*            EMI94.c               */
+0828 /*                                  */
+0829 /* Execute MARS Instruction ala     */
+0830 /* ICWS'94 Draft Standard.          */
+0831 /*                                  */
+0832 /* Last Update: November 8, 1995    */
+0833 /*                                  */
+0834 /************************************/
+
+0835 /* This ANSI C function is the benchmark MARS instruction   */
+0836 /* interpreter for the ICWS'94 Draft Standard.              */
+
+
+0837 /* The design philosophy of this function is to mirror the  */
+0838 /* standard as closely as possible, illuminate the meaning  */
+0839 /* of the standard, and provide the definitive answers to   */
+0840 /* questions of the "well, does the standard mean this or   */
+0841 /* that?" variety.  Although other, different implemen-     */
+0842 /* tations are definitely possible and encouraged; those    */
+0843 /* implementations should produce the same results as this  */
+0844 /* one does.                                                */
+
+
+0845 /* The function returns the state of the system.  What the  */
+0846 /* main program does with this information is not defined   */
+0847 /* by the standard.                                         */
+
+0848 enum SystemState {
+0849    UNDEFINED,
+0850    SUCCESS
+0851 };
+
+
+0852 /* Any number of warriors may be executing in core at one   */
+0853 /* time, depending on the run-time variable set and how     */
+0854 /* many warriors have failed during execution.  For this    */
+0855 /* implementation, warriors are identified by the order in  */
+0856 /* which they were loaded into core.                        */
+
+0857 typedef unsigned int Warrior;
+
+
+0858 /* An Address in Core War can be any number from 0 to the   */
+0859 /* size of core minus one, relative to the current          */
+0860 /* instruction.  In this implementation, core is an array   */
+0861 /* of instructions; therefore any variable types which      */
+0862 /* contain an Address can be considered to be of type       */
+0863 /* unsigned int.  One caveat: for the purposes of this      */
+0864 /* standard, unsigned int must be considered to have no     */
+0865 /* upper limit.  Depending on the size of core, it may be   */
+0866 /* necessary to take precautions against overflow.          */
+
+0867 typedef unsigned int Address;
+
+
+0868 /* The FIFO task queues and supporting functions are not    */
+0869 /* presented.   The function Queue() attempts to add a task */
+0870 /* pointer to the back of the currently executing warrior's */
+0871 /* task queue.  No special actions are to be taken if       */
+0872 /* Queue() is unsuccessful, which it will be if the warrior */
+0873 /* has already reached the task limit (maximum allowable    */
+0874 /* number of tasks).                                        */
+
+0875 extern void Queue(
+0876    Warrior  W,
+0877    Address  TaskPointer
+0878 );
+
+
+0879 /* There is one support function used to limit the range of */
+0880 /* reading from Core and writing to Core relative to the    */
+0881 /* current instruction.  Behaviour is as expected (a small  */
+0882 /* core within Core) only if the limits are factors of the  */
+0883 /* size of Core.                                            */
+
+0884 static Address Fold(
+0885    Address  pointer,    /* The pointer to fold into the desired range.  */
+0886    Address  limit,      /* The range limit.                             */
+0887    Address  M           /* The size of Core.                            */
+0888 ) {
+0889    Address  result;
+
+0890    result = pointer % limit;
+0891    if ( result > (limit/2) ) {
+0892       result += M - limit;
+0893    };
+0894    return(result);
+0895 }
+
+
+0896 /* Instructions are the principle data type.  Core is an    */
+0897 /* array of instructions, and there are three instruction   */
+0898 /* registers used by the MARS executive.                    */
+
+0899 enum Opcode {
+0900    DAT,
+0901    MOV,
+0902    ADD,
+0903    SUB,
+0904    MUL,
+0905    DIV,
+0906    MOD,
+0907    JMP,
+0908    JMZ,
+0909    JMN,
+0910    DJN,
+0911    CMP, /* aka SEQ */
+0912    SNE,
+0913    SLT,
+0914    SPL,
+0915    NOP,
+0916 };
+
+0917 enum Modifier {
+0918    A,
+0919    B,
+0920    AB,
+0921    BA,
+0922    F,
+0923    X,
+0924    I
+0925 };
+
+0926 enum Mode {
+0927    IMMEDIATE,
+0928    DIRECT,
+0929    A_INDIRECT,
+0930    B_INDIRECT,
+0931    A_DECREMENT,
+0932    B_DECREMENT,
+0933    A_INCREMENT,
+0934    B_INCREMENT,
+0935 };
+
+0936 typedef struct Instruction {
+0937    enum Opcode    Opcode;
+0938    enum Modifier  Modifier;
+0939    enum Mode      AMode;
+0940    Address        ANumber;
+0941    enum Mode      BMode;
+0942    Address        BNumber;
+0943 } Instruction;
+
+
+0944 /* The function is passed which warrior is currently        */
+0945 /* executing, the address of the warrior's current task's   */
+0946 /* current instruction, a pointer to the Core, the size of  */
+0947 /* the Core, and the read and write limits.  It returns the */
+0948 /* system's state after attempting instruction execution.   */
+
+0949 enum SystemState EMI94(
+
+0950 /* W indicates which warrior's code is executing.           */
+
+0951    Warrior  W,
+
+0952 /* PC is the address of this warrior's current task's       */
+0953 /* current instruction.                                     */
+
+0954    Address  PC,
+
+0955 /* Core is just an array of Instructions.  Core has been    */
+0956 /* initialized and the warriors have been loaded before     */
+0957 /* calling this function.                                   */
+
+0958    Instruction Core[],
+
+0959 /* M is the size of Core.                                   */
+
+0960    Address     M,
+
+0961 /* ReadLimit is the limitation on read distances.           */
+
+0962    Address     ReadLimit,
+
+0963 /* WriteLimit is the limitation on write distances.         */
+
+0964    Address     WriteLimit
+
+
+0965 ) {
+
+
+0966 /* This MARS stores the currently executing instruction in  */
+0967 /* the instruction register IR.                             */
+
+0968    Instruction IR;
+
+0969 /* This MARS stores the instruction referenced by the       */
+0970 /* A-operand in the instruction register IRA.               */
+
+0971    Instruction IRA;
+
+0972 /* This MARS stores the instruction referenced by the       */
+0973 /* B-operand in the instruction Register IRB.               */
+
+0974    Instruction IRB;
+
+0975 /* All four of the following pointers are PC-relative       */
+0976 /* (relative to the Program Counter).  Actual access of     */
+0977 /* core must add-in the Program Counter (mod core size).    */
+
+0978 /* The offset to the instruction referred to by the         */
+0979 /* A-operand for reading is Read Pointer A (RPA).           */
+
+0980    Address     RPA;
+
+0981 /* The offset to the instruction referred to by the         */
+0982 /* A-operand for writing is Write Pointer A (WPA).          */
+
+0983    Address     WPA;
+
+0984 /* The offset to the instruction referred to by the         */
+0985 /* B-operand for reading is Read Pointer B (RPB).           */
+
+0986    Address     RPB;
+
+0987 /* The offset to the instruction referred to by the         */
+0988 /* A-operand for writing is Write Pointer B (WPB).          */
+
+0989    Address     WPB;
+
+0990 /* Post-increment operands need to keep track of which      */
+0991 /* instruction to increment.                                */
+
+0992    Address     PIP;
+
+0993 /* Before execution begins, the current instruction is      */
+0994 /* copied into the Instruction Register.                    */
+
+0995    IR = Core[PC];
+
+
+0996 /* Next, the A-operand is completely evaluated.             */
+
+0997 /* For instructions with an Immediate A-mode, the Pointer A */
+0998 /* points to the source of the current instruction.         */
+
+0999    if (IR.AMode == IMMEDIATE) {
+1000       RPA = WPA = 0;
+1001    } else {
+
+1002 /* For instructions with a Direct A-mode, the Pointer A     */
+1003 /* points to the instruction IR.ANumber away, relative to   */
+1004 /* the Program Counter.                                     */
+1005 /* Note that implementing Core as an array necessitates     */
+1006 /* doing all Address arithmetic modulus the size of Core.   */
+
+1007       RPA = Fold(IR.ANumber, ReadLimit, M);
+1008       WPA = Fold(IR.ANumber, WriteLimit, M);
+
+1009 /* For instructions with A-indirection in the A-operand     */
+1010 /* (A-number Indirect, A-number Predecrement,               */
+1011 /* and A-number Postincrement A-modes):                     */
+
+1012       if (IR.AMode == A_INDIRECT
+1013           || IR.AMode == A_DECREMENT
+1014           || IR.AMode == A_INCREMENT) {
+
+1015 /* For instructions with Predecrement A-mode, the A-Field   */
+1016 /* of the instruction in Core currently pointed to by the   */
+1017 /* Pointer A is decremented (M - 1 is added).               */
+
+1018          if (IR.AMode == A_DECREMENT) {
+1019             Core[((PC + WPA) % M)].ANumber =
+1020                (Core[((PC + WPA) % M)].ANumber + M - 1) % M;
+1021          };
+
+1022 /* For instructions with Postincrement A-mode, the A-Field  */
+1023 /* of the instruction in Core currently pointed to by the   */
+1024 /* Pointer A will be incremented.                           */
+
+1025          if (IR.AMode == A_INCREMENT) {
+1026             PIP = (PC + WPA) % M;
+1027          };
+
+1028 /* For instructions with A-indirection in the A-operand,    */
+1029 /* Pointer A ultimately points to the instruction           */
+1030 /* Core[((PC + PCA) % M)].ANumber away, relative to the     */
+1031 /* instruction pointed to by Pointer A.                     */
+
+1032          RPA = Fold(
+1033             (RPA + Core[((PC + RPA) % M)].ANumber), ReadLimit, M
+1034          );
+1035          WPA = Fold(
+1036             (WPA + Core[((PC + WPA) % M)].ANumber), WriteLimit, M
+1037          );
+
+1038       };
+
+1039 /* For instructions with B-indirection in the A-operand     */
+1040 /* (B-number Indirect, B-number Predecrement,               */
+1041 /* and B-number Postincrement A-modes):                     */
+
+1042       if (IR.AMode == B_INDIRECT
+1043           || IR.AMode == B_DECREMENT
+1044           || IR.AMode == B_INCREMENT) {
+
+1045 /* For instructions with Predecrement A-mode, the B-Field   */
+1046 /* of the instruction in Core currently pointed to by the   */
+1047 /* Pointer A is decremented (M - 1 is added).               */
+
+1048          if (IR.AMode == DECREMENT) {
+1049             Core[((PC + WPA) % M)].BNumber =
+1050                (Core[((PC + WPA) % M)].BNumber + M - 1) % M;
+1051          };
+
+1052 /* For instructions with Postincrement A-mode, the B-Field  */
+1053 /* of the instruction in Core currently pointed to by the   */
+1054 /* Pointer A will be incremented.                           */
+
+1055          if (IR.AMode == INCREMENT) {
+1056             PIP = (PC + WPA) % M;
+1057          };
+
+1058 /* For instructions with B-indirection in the A-operand,    */
+1059 /* Pointer A ultimately points to the instruction           */
+1060 /* Core[((PC + PCA) % M)].BNumber away, relative to the     */
+1061 /* instruction pointed to by Pointer A.                     */
+
+1062          RPA = Fold(
+1063             (RPA + Core[((PC + RPA) % M)].BNumber), ReadLimit, M
+1064          );
+1065          WPA = Fold(
+1066             (WPA + Core[((PC + WPA) % M)].BNumber), WriteLimit, M
+1067          );
+
+1068       };
+1069    };
+
+1070 /* The Instruction Register A is a copy of the instruction  */
+1071 /* pointed to by Pointer A.                                 */
+
+1072    IRA = Core[((PC + RPA) % M)];
+
+1073 /* If the A-mode was post-increment, now is the time to     */
+1074 /* increment the instruction in core.                       */
+
+1075    if (IR.AMode == A_INCREMENT) {
+1076            Core[PIP].ANumber = (Core[PIP].ANumber + 1) % M;
+1077            }
+1078    else if (IR.AMode == B_INCREMENT) {
+1079            Core[PIP].BNumber = (Core[PIP].BNumber + 1) % M;
+1080            };
+
+1081 /* The Pointer B and the Instruction Register B are         */
+1082 /* evaluated in the same manner as their A counterparts.    */
+
+1083    if (IR.BMode == IMMEDIATE) {
+1084       RPB = WPB = 0;
+1085    } else {
+1086       RPB = Fold(IR.BNumber, ReadLimit, M);
+1087       WPB = Fold(IR.BNumber, WriteLimit, M);
+1088       if (IR.BMode == A_INDIRECT
+1089           || IR.BMode == A_DECREMENT
+1090           || IR.BMode == A_INCREMENT) {
+1091          if (IR.BMode == A_DECREMENT) {
+1092             Core[((PC + WPB) % M)].ANumber =
+1093                (Core[((PC + WPB) % M)].ANumber + M - 1) % M
+1094             ;
+1095          } else if (IR.BMode == A_INCREMENT) {
+1096             PIP = (PC + WPB) % M;
+1097          };
+1098          RPB = Fold(
+1099             (RPB + Core[((PC + RPB) % M)].ANumber), ReadLimit, M
+1100          );
+1101          WPB = Fold(
+1102             (WPB + Core[((PC + WPB) % M)].ANumber), WriteLimit, M
+1103          );
+1104       };
+1105       if (IR.BMode == B_INDIRECT
+1106           || IR.BMode == B_DECREMENT
+1107           || IR.BMode == B_INCREMENT) {
+1108          if (IR.BMode == B_DECREMENT) {
+1109             Core[((PC + WPB) % M)].BNumber =
+1110                (Core[((PC + WPB) % M)].BNumber + M - 1) % M
+1111             ;
+1112          } else if (IR.BMode == B_INCREMENT) {
+1113             PIP = (PC + WPB) % M;
+1114          };
+1115          RPB = Fold(
+1116             (RPB + Core[((PC + RPB) % M)].BNumber), ReadLimit, M
+1117          );
+1118          WPB = Fold(
+1119             (WPB + Core[((PC + WPB) % M)].BNumber), WriteLimit, M
+1120          );
+1121       };
+1122    };
+1123    IRB = Core[((PC + RPB) % M)];
+
+1124    if (IR.BMode == A_INCREMENT) {
+1125            Core[PIP].ANumber = (Core[PIP].ANumber + 1) % M;
+1126            }
+1127    else if (IR.BMode == INCREMENT) {
+1128            Core[PIP].BNumber = (Core[PIP].BNumber + 1) % M;
+1129            };
+
+1130 /* Execution of the instruction can now proceed.            */
+
+1131    switch (IR.Opcode) {
+
+1132 /* Instructions with a DAT opcode have no further function. */
+1133 /* The current task's Program Counter is not updated and is */
+1134 /* not returned to the task queue, effectively removing the */
+1135 /* task.                                                    */
+
+1136    case DAT: noqueue:
+1137       break;
+
+
+1138 /* MOV replaces the B-target with the A-value and queues    */
+1139 /* the next instruction.                                    */
+
+1140    case MOV:
+1141       switch (IR.Modifier) {
+
+1142 /* Replaces A-number with A-number.                         */
+
+1143       case A:
+1144          Core[((PC + WPB) % M)].ANumber = IRA.ANumber;
+1145          break;
+
+1146 /* Replaces B-number with B-number.                         */
+
+1147       case B:
+1148          Core[((PC + WPB) % M)].BNumber = IRA.BNumber;
+1149          break;
+
+1150 /* Replaces B-number with A-number.                         */
+
+1151       case AB:
+1152          Core[((PC + WPB) % M)].BNumber = IRA.ANumber;
+1153          break;
+
+1154 /* Replaces A-number with B-number.                         */
+
+1155       case BA:
+1156          Core[((PC + WPB) % M)].ANumber = IRA.BNumber;
+1157          break;
+
+1158 /* Replaces A-number with A-number and B-number with        */
+1159 /* B-number.                                                */
+
+1160       case F:
+1161          Core[((PC + WPB) % M)].ANumber = IRA.ANumber;
+1162          Core[((PC + WPB) % M)].BNumber = IRA.BNumber;
+1163          break;
+
+1164 /* Replaces B-number with A-number and A-number with        */
+1165 /* B-number.                                                */
+
+1166       case X:
+1167          Core[((PC + WPB) % M)].BNumber = IRA.ANumber;
+1168          Core[((PC + WPB) % M)].ANumber = IRA.BNumber;
+1169          break;
+
+1170 /* Copies entire instruction.                               */
+
+1171       case I:
+1172          Core[((PC + WPB) % M)] = IRA;
+1173          break;
+
+1174       default:
+1175          return(UNDEFINED);
+1176          break;
+1177       };
+
+1178 /* Queue up next instruction.                               */
+1179       Queue(W, ((PC + 1) % M));
+1180       break;
+
+1181 /* Arithmetic instructions replace the B-target with the    */
+1182 /* "op" of the A-value and B-value, and queue the next      */
+1183 /* instruction.  "op" can be the sum, the difference, or    */
+1184 /* the product.                                             */
+
+1185 #define ARITH(op) \
+1186       switch (IR.Modifier) { \
+1187       case A: \
+1188          Core[((PC + WPB) % M)].ANumber = \
+1189             (IRB.ANumber op IRA.ANumber) % M \
+1190          ; \
+1191          break; \
+1192       case B: \
+1193          Core[((PC + WPB) % M)].BNumber = \
+1194             (IRB.BNumber op IRA.BNumber) % M \
+1195          ; \
+1196          break; \
+1197       case AB: \
+1198          Core[((PC + WPB) % M)].BNumber = \
+1199             (IRB.ANumber op IRA.BNumber) % M \
+1200          ; \
+1201          break; \
+1202       case BA: \
+1203          Core[((PC + WPB) % M)].ANumber = \
+1204             (IRB.BNumber op IRA.ANumber) % M \
+1205          ; \
+1206          break; \
+1207       case F: \
+1208       case I: \
+1209          Core[((PC + WPB) % M)].ANumber = \
+1210             (IRB.ANumber op IRA.ANumber) % M \
+1211          ; \
+1212          Core[((PC + WPB) % M)].BNumber = \
+1213             (IRB.BNumber op IRA.BNumber) % M \
+1214          ; \
+1215          break; \
+1216       case X: \
+1217          Core[((PC + WPB) % M)].BNumber = \
+1218             (IRB.ANumber op IRA.BNumber) % M \
+1219          ; \
+1220          Core[((PC + WPB) % M)].ANumber = \
+1221             (IRB.BNumber op IRA.ANumber) % M \
+1222          ; \
+1223          break; \
+1224       default: \
+1225          return(UNDEFINED); \
+1226          break; \
+1227       }; \
+1228       Queue(W, ((PC + 1) % M)); \
+1229       break;
+
+1230    case ADD: ARITH(+)
+1231    case SUB: ARITH(+ M -)
+1232    case MUL: ARITH(*)
+
+1233 /* DIV and MOD replace the B-target with the integral       */
+1234 /* quotient (for DIV) or remainder (for MOD) of the B-value */
+1235 /* by the A-value, and queues the next instruction.         */
+1236 /* Process is removed from task queue if A-value is zero.   */
+
+1237 #define ARITH_DIV(op) \
+1238       switch (IR.Modifier) { \
+1239       case A: \
+1240          if (IRA.ANumber != 0) \
+1241             Core[((PC + WPB) % M)].ANumber = IRB.ANumber op IRA.ANumber; \
+1242          break; \
+1243       case B: \
+1244          if (IRA.BNumber != 0) \
+1245             Core[((PC + WPB) % M)].BNumber = IRB.BNumber op IRA.BNumber; \
+1246          else goto noqueue; \
+1247          break; \
+1248       case AB: \
+1249          if (IRA.ANumber != 0) \
+1250             Core[((PC + WPB) % M)].BNumber = IRB.BNumber op IRA.ANumber; \
+1251          else goto noqueue; \
+1252          break; \
+1253       case BA: \
+1254          if (IRA.BNumber != 0) \
+1255             Core[((PC + WPB) % M)].ANumber = IRB.ANumber op IRA.BNumber; \
+1256          else goto noqueue; \
+1257          break; \
+1258       case F: \
+1259       case I: \
+1260          if (IRA.ANumber != 0) \
+1261             Core[((PC + WPB) % M)].ANumber = IRB.ANumber op IRA.ANumber; \
+1262          if (IRA.BNumber != 0) \
+1263             Core[((PC + WPB) % M)].BNumber = IRB.BNumber op IRA.BNumber; \
+1264          if ((IRA.ANumber == 0) || (IRA.BNumber == 0)) \
+1265             goto noqueue; \
+1266          break; \
+1267       case X: \
+1268          if (IRA.ANumber != 0) \
+1269             Core[((PC + WPB) % M)].BNumber = IRB.BNumber op IRA.ANumber; \
+1270          if (IRA.BNumber != 0) \
+1271             Core[((PC + WPB) % M)].ANumber = IRB.ANumber op IRA.BNumber; \
+1272          if ((IRA.ANumber == 0) || (IRA.BNumber == 0)) \
+1273             goto noqueue; \
+1274          break; \
+1275       default: \
+1276          return(UNDEFINED); \
+1277          break; \
+1278       }; \
+1279       Queue(W, ((PC + 1) % M)); \
+1280       break;
+
+1281    case DIV: ARITH_DIV(/)
+1282    case MOD: ARITH_DIV(%)
+
+1283 /* JMP queues the sum of the Program Counter and the        */
+1284 /* A-pointer.                                               */
+
+1285    case JMP:
+1286       Queue(W, RPA);
+1287       break;
+
+
+1288 /* JMZ queues the sum of the Program Counter and Pointer A  */
+1289 /* if the B-value is zero.  Otherwise, it queues the next   */
+1290 /* instruction.                                             */
+
+1291    case JMZ:
+1292       switch (IR.Modifier) {
+1293       case A:
+1294       case BA:
+1295          if (IRB.ANumber == 0) {
+1296             Queue(W, RPA);
+1297          } else {
+1298             Queue(W, ((PC + 1) % M));
+1299          };
+1300          break;
+1301       case B:
+1302       case AB:
+1303          if (IRB.BNumber == 0) {
+1304             Queue(W, RPA);
 1305          } else {
 1306             Queue(W, ((PC + 1) % M));
 1307          };
 1308          break;
 1309       case F:
-1310          if ( (IRA.ANumber == IRB.ANumber) &&
-1311               (IRA.BNumber == IRB.BNumber)
-1312          ) {
-1313             Queue(W, ((PC + 2) % M));
+1310       case X:
+1311       case I:
+1312          if ( (IRB.ANumber == 0) && (IRB.BNumber == 0) ) {
+1313             Queue(W, RPA);
 1314          } else {
 1315             Queue(W, ((PC + 1) % M));
 1316          };
 1317          break;
-1318       case X:
-1319          if ( (IRA.ANumber == IRB.BNumber) &&
-1320               (IRA.BNumber == IRB.ANumber)
-1321          ) {
-1322             Queue(W, ((PC + 2) % M));
-1323          } else {
-1324             Queue(W, ((PC + 1) % M));
-1325          };
-1326          break;
-1327       case I:
-1328          if ( (IRA.Opcode == IRB.Opcode) &&
-1329               (IRA.Modifier == IRB.Modifier) &&
-1330               (IRA.AMode == IRB.AMode) &&
-1331               (IRA.ANumber == IRB.ANumber) &&
-1332               (IRA.BMode == IRB.BMode) &&
-1333               (IRA.BNumber == IRB.BNumber)
-1334          ) {
-1335             Queue(W, ((PC + 2) % M));
-1336          } else {
-1337             Queue(W, ((PC + 1) % M));
-1338          };
-1339          break;
-1340       default:
-1341          return(UNDEFINED);
-1342          break;
-1343       };
-1344       break;
+1318       default:
+1319          return(UNDEFINED);
+1320          break;
+1321       };
+1322       break;
 
 
-1345 /* SLT (Skip if Less Than) queues the instruction after the */
-1346 /* next instruction if A-value is less than B-value.        */
-1347 /* Otherwise, the next instruction is queued.  Note that no */
-1348 /* value is less than zero because only positive values can */
-1349 /* be represented in core.                                  */
+1323 /* JMN queues the sum of the Program Counter and Pointer A  */
+1324 /* if the B-value is not zero.  Otherwise, it queues the    */
+1325 /* next instruction.                                        */
 
-1350    case SLT :
-1351       switch (IR.Modifier) {
-1352       case A:
-1353          if (IRA.ANumber < IRB.ANumber) {
-1354             Queue(W, ((PC + 2) % M));
-1355          } else {
-1356             Queue(W, ((PC + 1) % M));
-1357          };
-1358          break;
-1359       case B:
-1360          if (IRA.BNumber < IRB.BNumber) {
-1361             Queue(W, ((PC + 2) % M));
-1362          } else {
-1363             Queue(W, ((PC + 1) % M));
-1364          };
-1365          break;
-1366       case AB:
-1367          if (IRA.ANumber < IRB.BNumber) {
-1368             Queue(W, ((PC + 2) % M));
-1369          } else {
-1370             Queue(W, ((PC + 1) % M));
-1371          };
-1372          break;
-1373       case BA:
-1374          if (IRA.BNumber < IRB.ANumber) {
-1375             Queue(W, ((PC + 2) % M));
-1376          } else {
-1377             Queue(W, ((PC + 1) % M));
-1378          };
-1379          break;
-1380       case F:
-1381       case I:
-1382          if ( (IRA.ANumber < IRB.ANumber) &&
-1383               (IRA.BNumber < IRB.BNumber)
-1384          ) {
-1385             Queue(W, ((PC + 2) % M));
-1386          } else {
-1387             Queue(W, ((PC + 1) % M));
-1388          };
-1389          break;
+1326    case JMN:
+1327       switch (IR.Modifier) {
+1328       case A:
+1329       case BA:
+1330          if (IRB.ANumber != 0) {
+1331             Queue(W, RPA);
+1332          } else {
+1333             Queue(W, ((PC + 1) % M));
+1334          };
+1335          break;
+1336       case B:
+1337       case AB:
+1338          if (IRB.BNumber != 0) {
+1339             Queue(W, RPA);
+1340          } else {
+1341             Queue(W, ((PC + 1) % M));
+1342          };
+1343          break;
+1344       case F:
+1345       case X:
+1346       case I:
+1347          if ( (IRB.ANumber != 0) || (IRB.BNumber != 0) ) {
+1348             Queue(W, RPA);
+1349          } else {
+1350             Queue(W, ((PC + 1) % M));
+1351          };
+1352          break;
+1353       default:
+1354          return(UNDEFINED);
+1355          break;
+1356       };
+1357       break;
+
+
+1358 /* DJN (Decrement Jump if Not zero) decrements the B-value  */
+1359 /* and the B-target, then tests if the B-value is zero.  If */
+1360 /* the result is not zero, the sum of the Program Counter   */
+1361 /* and Pointer A is queued.  Otherwise, the next            */
+1362 /* instruction is queued.                                   */
+
+1363    case DJN:
+1364       switch (IR.Modifier) {
+1365       case A:
+1366       case BA:
+1367          Core[((PC + WPB) % M)].ANumber =
+1368             (Core[((PC + WPB) % M)].ANumber + M - 1) % M
+1369          ;
+1370          IRB.ANumber -= 1;
+1371          if (IRB.ANumber != 0) {
+1372             Queue(W, RPA);
+1373          } else {
+1374             Queue(W, ((PC + 1) % M));
+1375          };
+1376          break;
+1377       case B:
+1378       case AB:
+1379          Core[((PC + WPB) % M)].BNumber =
+1380             (Core[((PC + WPB) % M)].BNumber + M - 1) % M
+1381          ;
+1382          IRB.BNumber -= 1;
+1383          if (IRB.BNumber != 0) {
+1384             Queue(W, RPA);
+1385          } else {
+1386             Queue(W, ((PC + 1) % M));
+1387          };
+1388          break;
+1389       case F:
 1390       case X:
-1391          if ( (IRA.ANumber < IRB.BNumber) &&
-1392               (IRA.BNumber < IRB.ANumber)
-1393          ) {
-1394             Queue(W, ((PC + 2) % M));
-1395          } else {
-1396             Queue(W, ((PC + 1) % M));
-1397          };
-1398          break;
-1399       default:
-1400          return(UNDEFINED);
-1401          break;
-1402       };
-1403       break;
+1391       case I:
+1392          Core[((PC + WPB) % M)].ANumber =
+1393             (Core[((PC + WPB) % M)].ANumber + M - 1) % M
+1394          ;
+1395          IRB.ANumber -= 1;
+1396          Core[((PC + WPB) % M)].BNumber =
+1397             (Core[((PC + WPB) % M)].BNumber + M - 1) % M
+1398          ;
+1399          IRB.BNumber -= 1;
+1400          if ( (IRB.ANumber != 0) || (IRB.BNumber != 0) ) {
+1401             Queue(W, RPA);
+1402          } else {
+1403             Queue(W, ((PC + 1) % M));
+1404          };
+1405          break;
+1406       default:
+1407          return(UNDEFINED);
+1408          break;
+1409       };
+1410       break;
 
 
-1404 /* SPL queues the next instruction and also queues the sum  */
-1405 /* of the Program Counter and Pointer A.                    */
+1411 /* SEQ/CMP compares the A-value and the B-value. If there   */
+1412 /* are no differences, then the instruction after the next  */
+1413 /* instruction is queued.  Otherwise, the next instrution   */
+1414 /* is queued.                                               */
 
-1406    case SPL:
-1407       Queue(W, ((PC + 1) % M));
-1408       Queue(W, RPA);
-1409       break;
-
-
-1410 /* Any other opcode is undefined.                           */
-
-1411    default:
-1412       return(UNDEFINED);
-1413    };
-
-
-1414 /* We are finished.                                         */
-
-1415    return(SUCCESS);
-1416 }
-
-1417 6. Validation Suite
-
-1418 6.1 Purpose and Requirements
-1419 This validation suite exists to help developers test the compatibility
-1420 of their Core War systems with the requirements set up in this standard.
-
-1421 6.2 Assembly To Load File Test
-
-1422 6.3 MARS tests
-
-1423 6.3.1   DAT Tests
-1424 6.3.2   MOV tests
-1425 6.3.3   ADD tests
-1426 6.3.4   SUB tests
-1427 6.3.5   MUL tests
-1428 6.3.6   DIV tests
-1429 6.3.7   MOD tests
-1430 6.3.8   JMP tests
-1431 6.3.9   JMZ tests
-1432 6.3.10  JMN tests
-1433 6.3.11  DJN tests
-1434 6.3.12  CMP tests
-1435 6.3.13  SLT tests
-1436 6.3.14  SPL tests
-
-
-1437 7. Glossary and Index
-1438 alphanumeric    Any of the characters A-Za-z0-9 and the underscore.
-
-1439 assembly file   A file containing Redcode instructions.
-
-1440 battle          A contest between two or more warriors.
-
-1441 core size       See section 4.2
-
-1442 Core War        A game in which programs compete for control of a
-1443                 computer called a Memory Array Redcode Simulator.
-
-1444 Core Wars       More than one game of Core War.
-
-1445 cycle           See section 4.2
-
-1446 Dwarf           See sections 2.7 and 3.5
-
-1447 initial instruction
-1448                 See section 4.2
-
-1449 instruction     A line of Redcode or object code indicating an action
-1450                 for MARS to execute.
-
-1451 instruction limit
-1452                 See section 4.2
-
-1453 loader          A program or that part of a program which loads
-1454                 warriors into a MARS.
-
-1455 load file       A file containing a warrior's instructions in an
-1456                 assembled format.  Any MARS program can be used with
-1457                 any and all Redcode assemblers which produce load
-1458                 files, allowing customized Core War systems.
-
-1459 MARS            An acronym for Memory Array Redcode Simulator.  The
-1460                 computer in which Core War warriors run.
-
-1461 newline         A linefeed, carriage-return, or combination of linefeed
-1462                 and carriage-return.  Whichever newline is native to the
-1463                 host operating system.
-
-1464 object code     The internal representation of a MARS instruction.
-
-1465 read distance   See section 4.2
-
-1466 Redcode         The assembly language of Core War.
-
-1467 tournament      A series of battles in which points, based upon the
-1468                 degree of success, are awarded for each battle and
-1469                 accumulated by each warrior (or programmer, depending
-1470                 upon the type of tournament).
-
-1471 warrior         A Redcode program.
-
-1472 whitespace      The space and tab character.
-
-1473 write distance  See section 4.2
+1415    case CMP:
+1416       switch (IR.Modifier) {
+1417       case A:
+1418          if (IRA.ANumber == IRB.ANumber) {
+1419             Queue(W, ((PC + 2) % M));
+1420          } else {
+1421             Queue(W, ((PC + 1) % M));
+1422          };
+1423          break;
+1424       case B:
+1425          if (IRA.BNumber == IRB.BNumber) {
+1426             Queue(W, ((PC + 2) % M));
+1427          } else {
+1428             Queue(W, ((PC + 1) % M));
+1429          };
+1430          break;
+1431       case AB:
+1432          if (IRA.ANumber == IRB.BNumber) {
+1433             Queue(W, ((PC + 2) % M));
+1434          } else {
+1435             Queue(W, ((PC + 1) % M));
+1436          };
+1437          break;
+1438       case BA:
+1439          if (IRA.BNumber == IRB.ANumber) {
+1440             Queue(W, ((PC + 2) % M));
+1441          } else {
+1442             Queue(W, ((PC + 1) % M));
+1443          };
+1444          break;
+1445       case F:
+1446          if ( (IRA.ANumber == IRB.ANumber) &&
+1447               (IRA.BNumber == IRB.BNumber)
+1448          ) {
+1449             Queue(W, ((PC + 2) % M));
+1450          } else {
+1451             Queue(W, ((PC + 1) % M));
+1452          };
+1453          break;
+1454       case X:
+1455          if ( (IRA.ANumber == IRB.BNumber) &&
+1456               (IRA.BNumber == IRB.ANumber)
+1457          ) {
+1458             Queue(W, ((PC + 2) % M));
+1459          } else {
+1460             Queue(W, ((PC + 1) % M));
+1461          };
+1462          break;
+1463       case I:
+1464          if ( (IRA.Opcode == IRB.Opcode) &&
+1465               (IRA.Modifier == IRB.Modifier) &&
+1466               (IRA.AMode == IRB.AMode) &&
+1467               (IRA.ANumber == IRB.ANumber) &&
+1468               (IRA.BMode == IRB.BMode) &&
+1469               (IRA.BNumber == IRB.BNumber)
+1470          ) {
+1471             Queue(W, ((PC + 2) % M));
+1472          } else {
+1473             Queue(W, ((PC + 1) % M));
+1474          };
+1475          break;
+1476       default:
+1477          return(UNDEFINED);
+1478          break;
+1479       };
+1480       break;
 
 
-1474 A. Differences Between Standards
+1481 /* SNE compares the A-value and the B-value. If there       */
+1482 /* is a difference, then the instruction after the next     */
+1483 /* instruction is queued.  Otherwise, the next instrution   */
+1484 /* is queued.                                               */
 
-1475 A.1 Purpose
-1476 This appendix lists some of the major differences between this standard
-1477 and those standards which preceded it.  The purpose is to help those
-1478 who are familiar with a previous standard or standards to quickly
-1479 understand those items which are new or have changed.
+1485    case SNE:
+1486       switch (IR.Modifier) {
+1487       case A:
+1488          if (IRA.ANumber != IRB.ANumber) {
+1489             Queue(W, ((PC + 2) % M));
+1490          } else {
+1491             Queue(W, ((PC + 1) % M));
+1492          };
+1493          break;
+1494       case B:
+1495          if (IRA.BNumber != IRB.BNumber) {
+1496             Queue(W, ((PC + 2) % M));
+1497          } else {
+1498             Queue(W, ((PC + 1) % M));
+1499          };
+1500          break;
+1501       case AB:
+1502          if (IRA.ANumber != IRB.BNumber) {
+1503             Queue(W, ((PC + 2) % M));
+1504          } else {
+1505             Queue(W, ((PC + 1) % M));
+1506          };
+1507          break;
+1508       case BA:
+1509          if (IRA.BNumber != IRB.ANumber) {
+1510             Queue(W, ((PC + 2) % M));
+1511          } else {
+1512             Queue(W, ((PC + 1) % M));
+1513          };
+1514          break;
+1515       case F:
+1516          if ( (IRA.ANumber != IRB.ANumber) ||
+1517               (IRA.BNumber != IRB.BNumber)
+1518          ) {
+1519             Queue(W, ((PC + 2) % M));
+1520          } else {
+1521             Queue(W, ((PC + 1) % M));
+1522          };
+1523          break;
+1524       case X:
+1525          if ( (IRA.ANumber != IRB.BNumber) ||
+1526               (IRA.BNumber != IRB.ANumber)
+1527          ) {
+1528             Queue(W, ((PC + 2) % M));
+1529          } else {
+1530             Queue(W, ((PC + 1) % M));
+1531          };
+1532          break;
+1533       case I:
+1534          if ( (IRA.Opcode != IRB.Opcode) ||
+1535               (IRA.Modifier != IRB.Modifier) ||
+1536               (IRA.AMode != IRB.AMode) ||
+1537               (IRA.ANumber != IRB.ANumber) ||
+1538               (IRA.BMode != IRB.BMode) ||
+1539               (IRA.BNumber != IRB.BNumber)
+1540          ) {
+1541             Queue(W, ((PC + 2) % M));
+1542          } else {
+1543             Queue(W, ((PC + 1) % M));
+1544          };
+1545          break;
+1546       default:
+1547          return(UNDEFINED);
+1548          break;
+1549       };
+1550       break;
 
 
-1480 A.2 Changes
+1551 /* SLT (Skip if Less Than) queues the instruction after the */
+1552 /* next instruction if A-value is less than B-value.        */
+1553 /* Otherwise, the next instruction is queued.  Note that no */
+1554 /* value is less than zero because only positive values can */
+1555 /* be represented in core.                                  */
 
-1481 A.2.1 Assembly Files
-1482 A comma is required for operand separation.
+1556    case SLT :
+1557       switch (IR.Modifier) {
+1558       case A:
+1559          if (IRA.ANumber < IRB.ANumber) {
+1560             Queue(W, ((PC + 2) % M));
+1561          } else {
+1562             Queue(W, ((PC + 1) % M));
+1563          };
+1564          break;
+1565       case B:
+1566          if (IRA.BNumber < IRB.BNumber) {
+1567             Queue(W, ((PC + 2) % M));
+1568          } else {
+1569             Queue(W, ((PC + 1) % M));
+1570          };
+1571          break;
+1572       case AB:
+1573          if (IRA.ANumber < IRB.BNumber) {
+1574             Queue(W, ((PC + 2) % M));
+1575          } else {
+1576             Queue(W, ((PC + 1) % M));
+1577          };
+1578          break;
+1579       case BA:
+1580          if (IRA.BNumber < IRB.ANumber) {
+1581             Queue(W, ((PC + 2) % M));
+1582          } else {
+1583             Queue(W, ((PC + 1) % M));
+1584          };
+1585          break;
+1586       case F:
+1587       case I:
+1588          if ( (IRA.ANumber < IRB.ANumber) &&
+1589               (IRA.BNumber < IRB.BNumber)
+1590          ) {
+1591             Queue(W, ((PC + 2) % M));
+1592          } else {
+1593             Queue(W, ((PC + 1) % M));
+1594          };
+1595          break;
+1596       case X:
+1597          if ( (IRA.ANumber < IRB.BNumber) &&
+1598               (IRA.BNumber < IRB.ANumber)
+1599          ) {
+1600             Queue(W, ((PC + 2) % M));
+1601          } else {
+1602             Queue(W, ((PC + 1) % M));
+1603          };
+1604          break;
+1605       default:
+1606          return(UNDEFINED);
+1607          break;
+1608       };
+1609       break;
 
-1483 Parenthetical expressions are allowed.
 
-1484 There is a new pseudo-opcode, ORG, for specifying the first logical
-1485 instruction.
+1610 /* SPL queues the next instruction and also queues the sum  */
+1611 /* of the Program Counter and Pointer A.                    */
 
-1486 There is a new operator, modulus '%', for determining the remainder
-1487 of integer division.
-
-1488 A.2.1.1 ICWS'86 to ICWS'94 Conversion
-1489 If a modifier is missing, it is assembled according to conversion
-1490 rules that depend on whether the ICWS'86 or '88 standard is emulated.
-1491 By default, a MARS should use the ICWS'88 conversion rules. Emulation
-1492 of ICWS'86 is optional.
-
-1493     Opcode                  A-mode  B-mode  modifier
-1494     ------------------------------------------------
-1495     DAT                     #$@<>   #$@<>   F
-1496     MOV,CMP                 #       #$@<>   AB
-1497                             $@<>    #       B
-1498                             $@<>    $@<>    I
-1499     ADD,SUB,MUL,DIV,MOD     #       #$@<>   AB
-1500                             $@<>    #$@<>   B
-1501     SLT                     #       #$@<>   AB
-1502                             $@<>    #$@<>   B
-1503     JMP,JMZ,JMN,DJN,SPL     #$@<>   #$@<>   B
-1504     ------------------------------------------------
-
-1505 A.2.1.2 ICWS'88 to ICWS'94 Conversion
-1506 The default modifier for ICWS'88 emulation is determined according
-1507 to the table below.
-
-1508     Opcode                  A-mode  B-mode  modifier
-1509     ------------------------------------------------
-1510     DAT                     #$@<>   #$@<>   F
-1511     MOV,CMP                 #       #$@<>   AB
-1512                             $@<>    #       B
-1513                             $@<>    $@<>    I
-1514     ADD,SUB,MUL,DIV,MOD     #       #$@<>   AB
-1515                             $@<>    #       B
-1516                             $@<>    $@<>    F
-1517     SLT                     #       #$@<>   AB
-1518                             $@<>    #$@<>   B
-1519     JMP,JMZ,JMN,DJN,SPL     #$@<>   #$@<>   B
-1520     ------------------------------------------------
-
-1521 A.2.2 Load Files
-1522 A load file format is specified for the first time.  (An object code
-1523 did exist for ICWS'86).
+1612    case SPL:
+1613       Queue(W, ((PC + 1) % M));
+1614       Queue(W, RPA);
+1615       break;
 
 
-1524 A.2.3 MARS
-1525 There are no illegal instructions.
+1616 /* NOP queues the next instruction.                         */
 
-1526 MUL, DIV, and MOD have been added.
+1617    case NOP:
+1618       Queue(W, ((PC + 1) % M));
+1619       break;
 
-1527 Opcode modifiers have been added.
 
-1528 Read and Write distance limitations have been imposed.
+1620 /* Any other opcode is undefined.                           */
 
+1621    default:
+1622       return(UNDEFINED);
+1623    };
+
+
+1624 /* We are finished.                                         */
+
+1625    return(SUCCESS);
+1626 }
+
+1627 6. Validation Suite
+
+1628 6.1 Purpose and Requirements
+1629 This validation suite exists to help developers test the compatibility
+1630 of their Core War systems with the requirements set up in this
+1631 standard.
+
+1632 6.2 Assembly To Load File Test
+
+1633 6.3 MARS tests
+
+1634 6.3.1   DAT Tests
+1635 6.3.2   MOV Tests
+1636 6.3.3   ADD Tests
+1637 6.3.4   SUB Tests
+1638 6.3.5   MUL Tests
+1639 6.3.6   DIV Tests
+1640 6.3.7   MOD Tests
+1641 6.3.8   JMP Tests
+1642 6.3.9   JMZ Tests
+1643 6.3.10  JMN Tests
+1644 6.3.11  DJN Tests
+1645 6.3.12  SEQ/CMP Tests
+1646 6.3.13  SNE Tests
+1647 6.3.14  SLT Tests
+1648 6.3.15  SPL Tests
+1649 6.3.16  NOP Tests
+
+
+1650 7. Glossary and Index
+1651 alphanumeric    Any of the characters A-Za-z0-9 and the underscore.
+
+1652 assembly file   A file containing Redcode instructions.
+
+1653 battle          A contest between two or more warriors.
+
+1654 core size       See section 4.2
+
+1655 Core War        A game in which programs compete for control of a
+1656                 computer called a Memory Array Redcode Simulator.
+
+1657 Core Wars       More than one game of Core War.
+
+1658 cycle           See section 4.2
+
+1659 Dwarf           See sections 2.7 and 3.6
+
+1660 initial instruction
+1661                 See section 4.2
+
+1662 instruction     A line of Redcode or object code indicating an action
+1663                 for MARS to execute.
+
+1664 instruction limit
+1665                 See section 4.2
+
+1666 loader          A program or that part of a program which loads
+1667                 warriors into a MARS.
+
+1668 load file       A file containing a warrior's instructions in an
+1669                 assembled format.  Any MARS program can be used with
+1670                 any and all Redcode assemblers which produce load
+1671                 files, allowing customized Core War systems.
+
+1672 MARS            An acronym for Memory Array Redcode Simulator.  The
+1673                 computer in which Core War warriors run.
+
+1674 newline         A linefeed, carriage-return, or combination of linefeed
+1675                 and carriage-return.  Whichever newline is native to
+1676                 the host operating system.
+
+1677 object code     The internal representation of a MARS instruction.
+
+1678 read distance   See section 4.2
+
+1679 Redcode         The assembly language of Core War.
+
+1680 tournament      A series of battles in which points, based upon the
+1681                 degree of success, are awarded for each battle and
+1682                 accumulated by each warrior (or programmer, depending
+1683                 upon the type of tournament).
+
+1684 warrior         A Redcode program.
+
+1685 whitespace      The space and tab characters.
+
+1686 write distance  See section 4.2
+
+
+1687 A. Differences Between Standards
+
+1688 A.1 Purpose
+1689 This appendix lists some of the major differences between this standard
+1690 and those standards which preceded it.  The purpose is to help those
+1691 who are familiar with a previous standard or standards to quickly
+1692 understand those items which are new or have changed.
+
+
+1693 A.2 Changes
+
+1694 A.2.1 Assembly Files
+1695 A comma is required for operand separation.
+
+1696 Parenthetical expressions are allowed.
+
+1697 There is a new pseudo-opcode, ORG, for specifying the first logical
+1698 instruction.
+
+1699 There is a new operator, modulus '%', for determining the remainder
+1700 of integer division.
+
+1701 A.2.1.1 ICWS'86 to ICWS'94 Conversion
+1702 If a modifier is missing, it is assembled according to conversion
+1703 rules that depend on whether the ICWS'86 or '88 standard is emulated.
+1704 By default, a MARS should use the ICWS'88 conversion rules. Emulation
+1705 of ICWS'86 is optional.
+
+1706     Opcode                  A-mode     B-mode     modifier
+1707     ---------------------------------------------------------
+1708     DAT                        #$@<>*{}   #$@<>*{}   F
+1709     MOV,CMP,SEQ,SNE            #          #$@<>*{}   AB
+1710                                $@<>*{}    #          B
+1711                                $@<>*{}    $@<>*{}    I
+1712     ADD,SUB,MUL,DIV,MOD        #          #$@<>*{}   AB
+1713                                $@<>*{}    #$@<>*{}   B
+1714     SLT                        #          #$@<>*{}   AB
+1715                                $@<>*{}    #$@<>*{}   B
+1716     JMP,JMZ,JMN,DJN,SPL,NOP    #$@<>*{}   #$@<>*{}   B
+1717     ---------------------------------------------------------
+
+1718 A.2.1.2 ICWS'88 to ICWS'94 Conversion
+1719 The default modifier for ICWS'88 emulation is determined according
+1720 to the table below.
+
+1721     Opcode                     A-mode     B-mode     modifier
+1722     ---------------------------------------------------------
+1723     DAT                        #$@<>*{}   #$@<>*{}   F
+1724     MOV,CMP,SEQ,SNE            #          #$@<>*{}   AB
+1725                                $@<>*{}    #          B
+1726                                $@<>*{}    $@<>*{}    I
+1727     ADD,SUB,MUL,DIV,MOD        #          #$@<>*{}   AB
+1728                                $@<>*{}    #          B
+1729                                $@<>*{}    $@<>*{}    F
+1730     SLT                        #          #$@<>*{}   AB
+1731                                $@<>*{}    #$@<>*{}   B
+1732     JMP,JMZ,JMN,DJN,SPL,NOP    #$@<>*{}   #$@<>*{}   B
+1733     ---------------------------------------------------------
+
+1734 A.2.2 Load Files
+1735 A load file format is specified for the first time.  (An object code
+1736 did exist for ICWS'86).
+
+
+1737 A.2.3 MARS
+1738 There are no illegal instructions.
+
+1739 The following addressing modes have been added:
+1740 A-number indirect, A-number predecrement, A-number postincrement,
+1741 and B-number postincrement.
+
+1742 MUL, DIV, MOD, SNE, and NOP have been added.
+1743 SEQ is an alias for CMP.
+
+1744 Opcode modifiers have been added.
+
+1745 Read and Write distance limitations have been imposed.
