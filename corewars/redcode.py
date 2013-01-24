@@ -1,10 +1,11 @@
 # coding: utf-8
 
+from copy import copy
 import re
 
 __all__ = ['parse', 'DAT', 'MOV', 'ADD', 'SUB', 'MUL', 'DIV', 'MOD', 'JMP',
            'JMZ', 'JMN', 'DJN', 'SPL', 'SLT', 'CMP', 'SEQ', 'SNE', 'NOP',
-           'LDP', 'STP', 'M_A', 'M_B', 'M_AB', 'M_BA', 'M_F', 'M_X',
+           'LDP', 'STP', 'M_A', 'M_B', 'M_AB', 'M_BA', 'M_F', 'M_X', 'M_I',
            'IMMEDIATE', 'DIRECT', 'INDIRECT_B', 'PREDEC_B', 'POSTINC_B',
            'INDIRECT_A', 'PREDEC_A', 'POSTINC_A', 'Instruction', 'Warrior']
 
@@ -127,14 +128,32 @@ class Instruction(object):
 
     def __init__(self, opcode, modifier=None, a_mode=None, a_number=0,
                  b_mode=None, b_number=0):
-        self.opcode = OPCODES[opcode.upper()]
-        self.a_mode = MODES[a_mode if a_mode else '$']
-        self.b_mode = MODES[b_mode if b_mode else '$']
-        self.a_number = a_number if a_number else 0
-        self.b_number = b_number if b_number else 0
+        self.opcode = OPCODES[opcode.upper()] if isinstance(opcode, str) else opcode
+        if a_mode is not None:
+            self.a_mode = MODES[a_mode] if isinstance(a_mode, str) else a_mode
+        else:
+            self.a_mode = DIRECT
+        if b_mode is not None:
+            self.b_mode = MODES[b_mode] if isinstance(b_mode, str) else b_mode
+        else:
+            self.b_mode = DIRECT
+        self._a_number = a_number if a_number else 0
+        self._b_number = b_number if b_number else 0
 
         # this should be last, to decide on the default modifier
-        self.modifier = MODIFIERS[modifier.upper()] if modifier else self.default_modifier()
+        if modifier is not None:
+            self.modifier = MODIFIERS[modifier.upper()] if isinstance(modifier, str) else modifier
+        else:
+            self.modifier = self.default_modifier()
+
+        self.core = None
+
+    def core_binded(self, core):
+        """Return a copy of this instruction binded to a Core.
+        """
+        instruction = copy(self)
+        instruction.core = core
+        return instruction
 
     def default_modifier(self):
         for opcodes, modes_modifiers in DEFAULT_MODIFIERS.iteritems():
@@ -145,6 +164,27 @@ class Instruction(object):
                         return modifier
         raise RuntimeError("Error getting default modifier")
 
+    @property
+    def a_number(self):
+        return self.core.signed_value(self._a_number) if self.core else self._a_number
+
+    @property
+    def b_number(self):
+        return self.core.signed_value(self._b_number) if self.core else self._b_number
+
+    @a_number.setter
+    def a_number(self, number):
+        self._a_number = self.core.trim(number) if self.core else number
+
+    @b_number.setter
+    def b_number(self, number):
+        self._b_number = self.core.trim(number) if self.core else number
+
+    def __eq__(self, other):
+        return (self.opcode == other.opcode and self.modifier == other.modifier and
+                self.a_mode == other.a_mode and self.a_number == other.a_number and
+                self.b_mode == other.b_mode and self.b_number == other.b_number)
+
     def __repr__(self):
         # inverse lookup the instruction values
         opcode   = next(key for key,value in OPCODES.iteritems() if value==self.opcode)
@@ -153,19 +193,21 @@ class Instruction(object):
         b_mode   = next(key for key,value in MODES.iteritems() if value==self.b_mode)
 
         return "<%s.%s %s%d, %s%d>" % (opcode, modifier, a_mode, self.a_number,
-                                      b_mode, self.b_number)
+                                       b_mode, self.b_number)
 
-def parse(input, environment={}):
+def parse(input, definitions={}):
     """ Parse a Redcode code from a line iterator (input) returning a Warrior
         object."""
 
     found_recode_info_comment = False
-    lines = []
     labels = {}
     code_address = 0
 
     warrior = Warrior()
     warrior.strategy = []
+
+    # use a version of environment because we're going to add names to it
+    environment = copy(definitions)
 
     # first pass
     for n, line in enumerate(input):
@@ -179,7 +221,10 @@ def parse(input, environment={}):
                     break;
                 else:
                     # first ;redcode ignore all input before
-                    lines = []
+                    warrior.instructions = []
+                    labels = {}
+                    environment = copy(definitions)
+                    code_address = 0
                     found_recode_info_comment = True
                 continue
 
@@ -224,21 +269,30 @@ def parse(input, environment={}):
                 if not line: continue
 
             # Match ORG
-            m = re.match(r'ORG\s+(.+)\s*$', line, re.I)
+            m = re.match(r'^ORG\s+(.+)\s*$', line, re.I)
             if m:
                 warrior.start = m.group(1)
                 continue
 
             # Match END
-            m = re.match(r'END(?:\s+([^\s].+))?$', line, re.I)
+            m = re.match(r'^END(?:\s+([^\s].+))?$', line, re.I)
             if m:
                 if m.group(1):
                     warrior.start = m.group(1)
                 break # stop processing (end of redcode)
 
+            # Match EQU
+            m = re.match(r'^([a-z]\w*)\s+EQU\s+(.*)\s*$', line, re.I)
+            if m:
+                name, value = m.groups()
+                # evaluate EQU expression using previous EQU definitions,
+                # add result to a name variable in environment
+                environment[name] = eval(value, environment)
+                continue
+
             # Keep matching the first word until it's no label anymore
             while True:
-                m = re.match(r'([a-z]\w*)\s*(.+)\s*$', line)
+                m = re.match(r'^([a-z]\w*)\s*(.+)\s*$', line)
                 if m:
                     label_candidate = m.group(1)
                     if label_candidate.upper() not in OPCODES.keys():

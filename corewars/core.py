@@ -22,7 +22,7 @@ class Core(object):
     def clear(self, instruction=DEFAULT_INITIAL_INSTRUCTION):
         """Writes the same instruction thorough the entire core.
         """
-        self.instructions = [copy(instruction) for i in xrange(self.size)]
+        self.instructions = [instruction.core_binded(self) for i in xrange(self.size)]
 
     def trim_write(self, address):
         "Return the trimmed address to write, considering the write limit."
@@ -31,6 +31,14 @@ class Core(object):
     def trim_read(self, address):
         "Return the trimmed address to read, considering the read limit."
         return self._trim(address, self.read_limit)
+
+    def trim(self, value):
+        "Return a trimmed value to the bounds of the core size"
+        return value % len(self)
+
+    def signed_value(self, value):
+        "Return a value trimmed to -core-size/2 to core-size/2"
+        return value % len(self) - len(self) / 2
 
     def _trim(self, address, limit):
         "Trims an address in the core, given a limit."

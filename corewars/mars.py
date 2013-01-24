@@ -38,14 +38,14 @@ class MARS(object):
                                                              len(warrior) -
                                                              self.minimum_separation))
             # add first and unique warrior task
-            warrior.task_queue = [start_position % len(self.core)]
+            warrior.task_queue = [self.core.trim(start_position)]
 
             # copy warrior's instructions to the core
             for i, instruction in enumerate(warrior.instructions):
                 self.core[start_position + i] = copy(instruction)
 
     def enqueue(self, warrior, address):
-        warrior.task_queue.append(address % len(self.core))
+        warrior.task_queue.append(self.core.trim(address))
 
     def step(self):
         """Run one simulation step: execute one task of every active warrior.
@@ -78,11 +78,9 @@ class MARS(object):
 
                         # pre-decrement, if needed
                         if ir.a_mode == PREDEC_A:
-                            self.core[pc + wpa].a_number = (self.core[pc + wpa].a_number +
-                                                            1) % len(self.core)
+                            self.core[pc + wpa].a_number -= 1
                         elif ir.a_mode == PREDEC_B:
-                            self.core[pc + wpa].b_number = (self.core[pc + wpa].b_number +
-                                                            1) % len(self.core)
+                            self.core[pc + wpa].b_number -= 1
 
                         # calculate the indirect address, from A or B number
                         if ir.a_mode in (PREDEC_A, INDIRECT_A, POSTINC_A):
@@ -94,11 +92,9 @@ class MARS(object):
 
                         # post-increment, if needed
                         if ir.a_mode == POSTINC_A:
-                            self.core[pip].a_number = (self.core[pip].a_number +
-                                                       1) % len(self.core)
+                            self.core[pip].a_number += 1
                         elif ir.a_mode == POSTINC_B:
-                            self.core[pip].b_number = (self.core[pip].b_number +
-                                                       1) % len(self.core)
+                            self.core[pip].b_number += 1
 
                 # copy instruction pointer by A
                 ira = copy(self.core[pc + rpa])
@@ -114,11 +110,9 @@ class MARS(object):
                         pip = (pc + wpb) % len(self.core)
 
                         if ir.b_mode == PREDEC_A:
-                            self.core[pc + wpb].a_number = (self.core[pc + wpb].a_number +
-                                                            1) % len(self.core)
+                            self.core[pc + wpb].a_number -= 1
                         elif ir.b_mode == PREDEC_B:
-                            self.core[pc + wpb].b_number = (self.core[pc + wpb].b_number +
-                                                            1) % len(self.core)
+                            self.core[pc + wpb].b_number -= 1
 
                         if ir.b_mode in (PREDEC_A, INDIRECT_A, POSTINC_A):
                             rpb = self.core.trim_read(rpb + self.core[pc + rpb].a_number)
@@ -128,11 +122,9 @@ class MARS(object):
                             wpb = self.core.trim_write(wpb + self.core[pc + rpb].b_number)
 
                         if ir.b_mode == POSTINC_A:
-                            self.core[pip].a_number = (self.core[pip].a_number +
-                                                       1) % len(self.core)
+                            self.core[pip].a_number += 1
                         elif ir.b_mode == POSTINC_B:
-                            self.core[pip].b_number = (self.core[pip].b_number +
-                                                       1) % len(self.core)
+                            self.core[pip].b_number += 1
 
                 irb = copy(self.core[pc + rpb])
 
