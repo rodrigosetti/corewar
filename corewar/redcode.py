@@ -83,14 +83,14 @@ MODES = { '#': IMMEDIATE, '$': DIRECT, '@': INDIRECT_B, '<': PREDEC_B,
 # table below.
 #        Opcode                             A-mode    B-mode    modifier
 DEFAULT_MODIFIERS = {
-        ('DAT',)                       : {('#$@<>', '#$@<>'): 'F'},
+        ('DAT', 'NOP')                 : {('#$@<>', '#$@<>'): 'F'},
         ('MOV','CMP')                  : {('#'    , '#$@<>'): 'AB',
                                           ('$@<>' , '#'    ): 'B' ,
                                           ('$@<>' , '$@<>' ): 'I'},
         ('ADD','SUB','MUL','DIV','MOD'): {('#'    , '#$@<>'): 'AB',
                                           ('$@<>' , '#'    ): 'B' ,
                                           ('$@<>' , '$@<>' ): 'F'},
-        ('SLT',)                       : {('#'    , '#$@<>'): 'AB',
+        ('SLT', 'SEQ', 'SNE')          : {('#'    , '#$@<>'): 'AB',
                                           ('$@<>' , '#$@<>'): 'B'},
         ('JMP','JMZ','JMN','DJN','SPL'): {('#$@<>', '#$@<>'): 'B'}
     }
@@ -290,7 +290,7 @@ def parse(input, definitions={}):
 
             # Keep matching the first word until it's no label anymore
             while True:
-                m = re.match(r'^([a-z]\w*)\s*(.+)\s*$', line)
+                m = re.match(r'^([a-z]\w*)\s+(.+)\s*$', line)
                 if m:
                     label_candidate = m.group(1)
                     if label_candidate.upper() not in OPCODES:
