@@ -273,7 +273,7 @@ def parse(input, definitions={}):
                 continue
 
             # Match END
-            m = re.match(r'^END(?:\s+([^\s].+))?$', line, re.I)
+            m = re.match(r'^END(?:\s+([^\s]+))?$', line, re.I)
             if m:
                 if m.group(1):
                     warrior.start = m.group(1)
