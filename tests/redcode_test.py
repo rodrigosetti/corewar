@@ -3,7 +3,7 @@
 
 import unittest
 
-from corewars.redcode import *
+from corewar.redcode import *
 
 DEFAULT_ENV = {'CORESIZE': 8000}
 
