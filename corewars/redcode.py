@@ -5,9 +5,9 @@ import re
 
 __all__ = ['parse', 'DAT', 'MOV', 'ADD', 'SUB', 'MUL', 'DIV', 'MOD', 'JMP',
            'JMZ', 'JMN', 'DJN', 'SPL', 'SLT', 'CMP', 'SEQ', 'SNE', 'NOP',
-           'LDP', 'STP', 'M_A', 'M_B', 'M_AB', 'M_BA', 'M_F', 'M_X', 'M_I',
-           'IMMEDIATE', 'DIRECT', 'INDIRECT_B', 'PREDEC_B', 'POSTINC_B',
-           'INDIRECT_A', 'PREDEC_A', 'POSTINC_A', 'Instruction', 'Warrior']
+           'M_A', 'M_B', 'M_AB', 'M_BA', 'M_F', 'M_X', 'M_I', 'IMMEDIATE',
+           'DIRECT', 'INDIRECT_B', 'PREDEC_B', 'POSTINC_B', 'INDIRECT_A',
+           'PREDEC_A', 'POSTINC_A', 'Instruction', 'Warrior']
 
 DAT = 0     # terminate process
 MOV = 1     # move from A to B
@@ -26,8 +26,6 @@ CMP = 13    # same as SEQ
 SEQ = 14    # Skip next instruction if A is equal to B
 SNE = 15    # Skip next instruction if A is not equal to B
 NOP = 16    # No operation
-LDP = 17    # Load P-space cell A into core address B
-STP = 18    # Store A-number into P-space cell B
 
 # Instructions read and write A-fields.
 M_A = 0
@@ -72,7 +70,7 @@ INSTRUCTION_REGEX = re.compile(r'([a-z]{3})'  # opcode
 OPCODES = {'DAT': DAT, 'MOV': MOV, 'ADD': ADD, 'SUB': SUB, 'MUL': MUL,
            'DIV': DIV, 'MOD': MOD, 'JMP': JMP, 'JMZ': JMZ, 'JMN': JMN,
            'DJN': DJN, 'SPL': SPL, 'SLT': SLT, 'CMP': CMP, 'SEQ': SEQ,
-           'SNE': SNE, 'NOP': NOP, 'LDP': LDP, 'STP': STP}
+           'SNE': SNE, 'NOP': NOP}
 
 MODIFIERS = {'A': M_A, 'B': M_B, 'AB': M_AB, 'BA': M_BA, 'F': M_F, 'X': M_X,
              'I': M_I}

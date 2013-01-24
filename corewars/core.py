@@ -38,7 +38,8 @@ class Core(object):
 
     def signed_value(self, value):
         "Return a value trimmed to -core-size/2 to core-size/2"
-        return value % len(self) - len(self) / 2
+        val = value % len(self)
+        return val if val <= len(self)/2 else len(self)-val
 
     def _trim(self, address, limit):
         "Trims an address in the core, given a limit."

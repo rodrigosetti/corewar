@@ -1,7 +1,9 @@
 # coding: utf-8
 
 from copy import copy
+import operator
 from random import randint
+
 from core import Core, DEFAULT_INITIAL_INSTRUCTION
 from redcode import *
 
@@ -13,7 +15,6 @@ class MARS(object):
 
     def __init__(self, core=None, warriors=None, minimum_separation=100):
         self.core = core if core else Core()
-        self.task_queue = []
         self.minimum_separation = minimum_separation
         self.warriors = warriors if warriors else []
         if self.warriors:
@@ -34,15 +35,15 @@ class MARS(object):
             # position is in the nth equally separated space plus a random
             # shift up to where the last instruction is minimum separated from
             # the first instruction of the next warrior
-            start_position = (n * space) + randint(0, max(0, space -
+            warrior_position = (n * space) + randint(0, max(0, space -
                                                              len(warrior) -
                                                              self.minimum_separation))
             # add first and unique warrior task
-            warrior.task_queue = [self.core.trim(start_position)]
+            warrior.task_queue = [self.core.trim(warrior_position + warrior.start)]
 
             # copy warrior's instructions to the core
             for i, instruction in enumerate(warrior.instructions):
-                self.core[start_position + i] = copy(instruction)
+                self.core[warrior_position + i] = copy(instruction)
 
     def enqueue(self, warrior, address):
         warrior.task_queue.append(self.core.trim(address))
@@ -85,10 +86,10 @@ class MARS(object):
                         # calculate the indirect address, from A or B number
                         if ir.a_mode in (PREDEC_A, INDIRECT_A, POSTINC_A):
                             rpa = self.core.trim_read(rpa + self.core[pc + rpa].a_number)
-                            wpa = self.core.trim_write(wpa + self.core[pc + rpa].a_number)
+                            wpa = self.core.trim_write(wpa + self.core[pc + wpa].a_number)
                         else:
                             rpa = self.core.trim_read(rpa + self.core[pc + rpa].b_number)
-                            wpa = self.core.trim_write(wpa + self.core[pc + rpa].b_number)
+                            wpa = self.core.trim_write(wpa + self.core[pc + wpa].b_number)
 
                         # post-increment, if needed
                         if ir.a_mode == POSTINC_A:
@@ -116,10 +117,10 @@ class MARS(object):
 
                         if ir.b_mode in (PREDEC_A, INDIRECT_A, POSTINC_A):
                             rpb = self.core.trim_read(rpb + self.core[pc + rpb].a_number)
-                            wpb = self.core.trim_write(wpb + self.core[pc + rpb].a_number)
+                            wpb = self.core.trim_write(wpb + self.core[pc + wpb].a_number)
                         else:
                             rpb = self.core.trim_read(rpb + self.core[pc + rpb].b_number)
-                            wpb = self.core.trim_write(wpb + self.core[pc + rpb].b_number)
+                            wpb = self.core.trim_write(wpb + self.core[pc + wpb].b_number)
 
                         if ir.b_mode == POSTINC_A:
                             self.core[pip].a_number += 1
@@ -127,6 +128,62 @@ class MARS(object):
                             self.core[pip].b_number += 1
 
                 irb = copy(self.core[pc + rpb])
+
+                # arithmetic common code
+                def do_arithmetic(op):
+                    try:
+                        if ir.modifier == M_A:
+                            self.core[pc + wpb].a_number = op(irb.a_number, ira.a_number)
+                        elif ir.modifier == M_B:
+                            self.core[pc + wpb].b_number = op(irb.b_number, ira.b_number)
+                        elif ir.modifier == M_AB:
+                            self.core[pc + wpb].b_number = op(irb.a_number, ira.b_number)
+                        elif ir.modifier == M_BA:
+                            self.core[pc + wpb].a_number = op(irb.b_number, ira.a_number)
+                        elif ir.modifier == M_F or ir.modifier == M_I:
+                            self.core[pc + wpb].a_number = op(irb.a_number, ira.a_number)
+                            self.core[pc + wpb].b_number = op(irb.b_number, ira.b_number)
+                        elif ir.modifier == M_X:
+                            self.core[pc + wpb].b_number = op(irb.a_number, ira.b_number)
+                            self.core[pc + wpb].a_number = op(irb.b_number, ira.a_number)
+                        else:
+                            raise ValueError("Invalid modifier: %d" % ir.modifier)
+
+                        # enqueue next instruction
+                        self.enqueue(warrior, pc + 1)
+                    except ZeroDivisionError:
+                        pass
+
+                # comparison common code
+                def do_comparison(cmp):
+                    if ir.modifier == M_A:
+                        self.enqueue(warrior,
+                                     pc + 2 if cmp(ira.a_number, irb.a_number) else
+                                     pc + 1)
+                    elif ir.modifier == M_B:
+                        self.enqueue(warrior,
+                                     pc + 2 if cmp(ira.b_number, irb.b_number) else
+                                     pc + 1)
+                    elif ir.modifier == M_AB:
+                        self.enqueue(warrior,
+                                     pc + 2 if cmp(ira.a_number, irb.b_number) else
+                                     pc + 1)
+                    elif ir.modifier == M_BA:
+                        self.enqueue(warrior,
+                                     pc + 2 if cmp(ira.b_number, irb.a_number) else
+                                     pc + 1)
+                    elif ir.modifier == M_F or ir.modifier == M_I:
+                        self.enqueue(warrior,
+                                     pc + 2 if cmp(ira.a_number, irb.a_number) and
+                                               cmp(ira.b_number, irb.b_number) else
+                                     pc + 1)
+                    elif ir.modifier == M_X:
+                        self.enqueue(warrior,
+                                     pc + 2 if cmp(ira.a_number, irb.b_number) and
+                                               cmp(ira.b_number, irb.a_number) else
+                                     pc + 1)
+                    else:
+                        raise ValueError("Invalid modifier: %d" % ir.modifier)
 
                 if ir.opcode == DAT:
                     # does not enqueue next instruction, therefore, killing the
@@ -155,41 +212,68 @@ class MARS(object):
                     # enqueue next instruction
                     self.enqueue(warrior, pc + 1)
                 elif ir.opcode == ADD:
-                    # TODO: The rest of opcodes
-                    pass
+                    do_arithmetic(operator.add)
                 elif ir.opcode == SUB:
-                    pass
+                    do_arithmetic(operator.sub)
                 elif ir.opcode == MUL:
-                    pass
+                    do_arithmetic(operator.mul)
                 elif ir.opcode == DIV:
-                    pass
+                    do_arithmetic(operator.div)
                 elif ir.opcode == MOD:
-                    pass
+                    do_arithmetic(operator.mod)
                 elif ir.opcode == JMP:
-                    pass
+                    self.enqueue(warrior, pc + rpa)
                 elif ir.opcode == JMZ:
-                    pass
+                    if ir.modifier == M_A or ir.modifier == M_BA:
+                        self.enqueue(warrior, pc + (rpa if irb.a_number == 0 else 1))
+                    elif ir.modifier == M_B or ir.modifier == M_AB:
+                        self.enqueue(warrior, pc + (rpa if irb.b_number == 0 else 1))
+                    elif ir.modifier in (M_F, M_X, M_I):
+                        self.enqueue(warrior,
+                                     pc + (rpa if irb.a_number == irb.b_number == 0 else 1))
+                    else:
+                        raise ValueError("Invalid modifier: %d" % ir.modifier)
                 elif ir.opcode == JMN:
-                    pass
+                    if ir.modifier == M_A or ir.modifier == M_BA:
+                        self.enqueue(warrior, pc + (rpa if irb.a_number != 0 else 1))
+                    elif ir.modifier == M_B or ir.modifier == M_AB:
+                        self.enqueue(warrior, pc + (rpa if irb.b_number != 0 else 1))
+                    elif ir.modifier in (M_F, M_X, M_I):
+                        self.enqueue(warrior,
+                                     pc + (rpa if irb.a_number != 0 or
+                                                  irb.b_number != 0 else 1))
+                    else:
+                        raise ValueError("Invalid modifier: %d" % ir.modifier)
                 elif ir.opcode == DJN:
-                    pass
+                    if ir.modifier == M_A or ir.modifier == M_BA:
+                        self.core[pc + wpb].a_number -= 1
+                        irb.a_number -= 1
+                        self.enqueue(warrior, pc + (rpa if irb.a_number != 0 else 1))
+                    elif ir.modifier == M_B or ir.modifier == M_AB:
+                        self.core[pc + wpb].b_number -= 1
+                        irb.b_number -= 1
+                        self.enqueue(warrior, pc + (rpa if irb.b_number != 0 else 1))
+                    elif ir.modifier in (M_F, M_X, M_I):
+                        self.core[pc + wpb].a_number -= 1
+                        irb.a_number -= 1
+                        self.core[pc + wpb].b_number -= 1
+                        irb.b_number -= 1
+                        self.enqueue(warrior,
+                                     pc + (rpa if irb.a_number != 0 or
+                                                  irb.b_number != 0 else 1))
+                    else:
+                        raise ValueError("Invalid modifier: %d" % ir.modifier)
                 elif ir.opcode == SPL:
-                    pass
+                    self.enqueue(warrior, pc + 1)
+                    self.enqueue(warrior, pc + rpa)
                 elif ir.opcode == SLT:
-                    pass
-                elif ir.opcode == CMP:
-                    pass
-                elif ir.opcode == SEQ:
-                    pass
+                    do_comparison(operator.lt)
+                elif ir.opcode == CMP or ir.opcode == SEQ:
+                    do_comparison(operator.eq)
                 elif ir.opcode == SNE:
-                    pass
+                    do_comparison(operator.ne)
                 elif ir.opcode == NOP:
-                    pass
-                elif ir.opcode == LDP:
-                    pass
-                elif ir.opcode == STP:
-                    pass
+                    self.enqueue(warrior, pc + 1)
                 else:
                     raise ValueError("Invalid opcode: %d" % ir.opcode)
-
 
