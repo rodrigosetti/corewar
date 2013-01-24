@@ -57,9 +57,9 @@ DIRECT = 1      # direct
 INDIRECT_B = 2  # indirect using B-field
 PREDEC_B  = 3   # predecrement indirect using B-field
 POSTINC_B = 4   # postincrement indirect using B-field
-INDIRECT_A = 5  # (*) indirect using A-field
-PREDEC_A = 6    # (*) predecrement indirect using A-field
-POSTINC_A = 7   # (*) postincrement indirect using A-field
+INDIRECT_A = 5  # indirect using A-field
+PREDEC_A = 6    # predecrement indirect using A-field
+POSTINC_A = 7   # postincrement indirect using A-field
 
 INSTRUCTION_REGEX = re.compile(r'([a-z]{3})'  # opcode
                                r'(?:\s*\.\s*([abfxi]{1,2}))?' # optional modifier
@@ -293,13 +293,12 @@ def parse(input, definitions={}):
                 m = re.match(r'^([a-z]\w*)\s*(.+)\s*$', line)
                 if m:
                     label_candidate = m.group(1)
-                    if label_candidate.upper() not in OPCODES.keys():
+                    if label_candidate.upper() not in OPCODES:
                         labels[label_candidate] = code_address
 
                         # strip label off and keep looking
                         line = m.group(2)
                         continue
-                        break
                 # its an instruction, not label. proceed OR no match, probably
                 # a all-value-omitted instruction.
                 break
