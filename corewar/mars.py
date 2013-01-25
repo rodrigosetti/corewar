@@ -13,19 +13,19 @@ class MARS(object):
     """The MARS. Encapsulates a simulation.
     """
 
-    def __init__(self, core=None, warriors=None, minimum_separation=100):
+    def __init__(self, core=None, warriors=None, minimum_separation=100, randomize=True):
         self.core = core if core else Core()
         self.minimum_separation = minimum_separation
         self.warriors = warriors if warriors else []
         if self.warriors:
-            self.load_warriors()
+            self.load_warriors(randomize)
 
     def reset(self, clear_instruction=DEFAULT_INITIAL_INSTRUCTION):
         "Clears core and re-loads warriors."
         self.core.clear(clear_instruction)
         self.load_warriors()
 
-    def load_warriors(self):
+    def load_warriors(self, randomize=True):
         "Loads its warriors to the memory with starting task queues"
 
         # the space between warriors - equally spaced in the core
@@ -35,9 +35,13 @@ class MARS(object):
             # position is in the nth equally separated space plus a random
             # shift up to where the last instruction is minimum separated from
             # the first instruction of the next warrior
-            warrior_position = (n * space) + randint(0, max(0, space -
-                                                             len(warrior) -
-                                                             self.minimum_separation))
+            warrior_position = (n * space)
+
+            if randomize:
+                warrior_position += randint(0, max(0, space -
+                                                      len(warrior) -
+                                                      self.minimum_separation))
+
             # add first and unique warrior task
             warrior.task_queue = [self.core.trim(warrior_position + warrior.start)]
 
@@ -75,7 +79,7 @@ class MARS(object):
                         # one of the indirect modes
 
                         # save this in case we need to use to post-increment
-                        pip = (pc + wpa) % len(self.core)
+                        pip = pc + wpa
 
                         # pre-decrement, if needed
                         if ir.a_mode == PREDEC_A:
@@ -91,14 +95,14 @@ class MARS(object):
                             rpa = self.core.trim_read(rpa + self.core[pc + rpa].b_number)
                             wpa = self.core.trim_write(wpa + self.core[pc + wpa].b_number)
 
-                        # post-increment, if needed
-                        if ir.a_mode == POSTINC_A:
-                            self.core[pip].a_number += 1
-                        elif ir.a_mode == POSTINC_B:
-                            self.core[pip].b_number += 1
-
                 # copy instruction pointer by A
                 ira = copy(self.core[pc + rpa])
+
+                # post-increment, if needed
+                if ir.a_mode == POSTINC_A:
+                    self.core[pip].a_number += 1
+                elif ir.a_mode == POSTINC_B:
+                    self.core[pip].b_number += 1
 
                 # evaluate the B-operand - pretty much the same as A
                 if ir.b_mode == IMMEDIATE:
@@ -108,7 +112,7 @@ class MARS(object):
                     wpb = self.core.trim_write(ir.b_number)
 
                     if ir.b_mode != DIRECT:
-                        pip = (pc + wpb) % len(self.core)
+                        pip = pc + wpb
 
                         if ir.b_mode == PREDEC_A:
                             self.core[pc + wpb].a_number -= 1
@@ -122,30 +126,30 @@ class MARS(object):
                             rpb = self.core.trim_read(rpb + self.core[pc + rpb].b_number)
                             wpb = self.core.trim_write(wpb + self.core[pc + wpb].b_number)
 
-                        if ir.b_mode == POSTINC_A:
-                            self.core[pip].a_number += 1
-                        elif ir.b_mode == POSTINC_B:
-                            self.core[pip].b_number += 1
-
                 irb = copy(self.core[pc + rpb])
+
+                if ir.b_mode == POSTINC_A:
+                    self.core[pip].a_number += 1
+                elif ir.b_mode == POSTINC_B:
+                    self.core[pip].b_number += 1
 
                 # arithmetic common code
                 def do_arithmetic(op):
                     try:
                         if ir.modifier == M_A:
-                            self.core[pc + wpb].a_number = op(ira.a_number, irb.a_number)
+                            self.core[pc + wpb].a_number = op(irb.a_number, ira.a_number)
                         elif ir.modifier == M_B:
-                            self.core[pc + wpb].b_number = op(ira.b_number, irb.b_number)
+                            self.core[pc + wpb].b_number = op(irb.b_number, ira.b_number)
                         elif ir.modifier == M_AB:
-                            self.core[pc + wpb].b_number = op(ira.a_number, irb.b_number)
+                            self.core[pc + wpb].b_number = op(irb.b_number, ira.a_number)
                         elif ir.modifier == M_BA:
                             self.core[pc + wpb].a_number = op(irb.b_number, ira.a_number)
                         elif ir.modifier == M_F or ir.modifier == M_I:
-                            self.core[pc + wpb].a_number = op(ira.a_number, irb.a_number)
-                            self.core[pc + wpb].b_number = op(ira.b_number, irb.b_number)
+                            self.core[pc + wpb].a_number = op(irb.a_number, ira.a_number)
+                            self.core[pc + wpb].b_number = op(irb.b_number, ira.b_number)
                         elif ir.modifier == M_X:
-                            self.core[pc + wpb].b_number = op(ira.a_number, irb.b_number)
-                            self.core[pc + wpb].a_number = op(ira.b_number, irb.a_number)
+                            self.core[pc + wpb].b_number = op(irb.b_number, ira.a_number)
+                            self.core[pc + wpb].a_number = op(irb.a_number, ira.b_number)
                         else:
                             raise ValueError("Invalid modifier: %d" % ir.modifier)
 
@@ -172,7 +176,7 @@ class MARS(object):
                         self.enqueue(warrior,
                                      pc + 2 if cmp(ira.b_number, irb.a_number) else
                                      pc + 1)
-                    elif ir.modifier == M_F or ir.modifier == M_I:
+                    elif ir.modifier == M_F:
                         self.enqueue(warrior,
                                      pc + 2 if cmp(ira.a_number, irb.a_number) and
                                                cmp(ira.b_number, irb.b_number) else
@@ -182,6 +186,9 @@ class MARS(object):
                                      pc + 2 if cmp(ira.a_number, irb.b_number) and
                                                cmp(ira.b_number, irb.a_number) else
                                      pc + 1)
+                    elif ir.modifier == M_I:
+                        self.enqueue(warrior,
+                                     pc + (2 if ira == irb else 1))
                     else:
                         raise ValueError("Invalid modifier: %d" % ir.modifier)
 

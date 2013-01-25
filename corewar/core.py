@@ -36,10 +36,9 @@ class Core(object):
         "Return a trimmed value to the bounds of the core size"
         return value % len(self)
 
-    def signed_value(self, value):
-        "Return a value trimmed to -core-size/2 to core-size/2"
-        val = value % len(self)
-        return val if val <= len(self)/2 else len(self)-val
+    def trim_signed(self, value):
+        "Return a trimmed value to the bounds of -core size to +core size"
+        return value % len(self) if abs(value) > len(self) else value
 
     def _trim(self, address, limit):
         "Trims an address in the core, given a limit."
@@ -50,6 +49,12 @@ class Core(object):
 
     def __getitem__(self, address):
         return self.instructions[address % self.size]
+
+    def __getslice__(self, start, stop):
+        if start > stop:
+            return self.instructions[start:] + self.instructions[:stop]
+        else:
+            return self.instructions[start:stop]
 
     def __setitem__(self, address, instruction):
         self.instructions[address % self.size] = instruction

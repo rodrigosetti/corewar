@@ -76,7 +76,7 @@ MODIFIERS = {'A': M_A, 'B': M_B, 'AB': M_AB, 'BA': M_BA, 'F': M_F, 'X': M_X,
              'I': M_I}
 
 MODES = { '#': IMMEDIATE, '$': DIRECT, '@': INDIRECT_B, '<': PREDEC_B,
-          '>': POSTINC_B, '*': INDIRECT_A, '{': PREDEC_A, '}': PREDEC_B }
+          '>': POSTINC_B, '*': INDIRECT_A, '{': PREDEC_A, '}': POSTINC_A }
 
 # ICWS'88 to ICWS'94 Conversion
 # The default modifier for ICWS'88 emulation is determined according to the
@@ -115,6 +115,9 @@ class Warrior(object):
         self.start = start
         self.instructions = []
 
+    def __iter__(self):
+        return iter(self.instructions)
+
     def __len__(self):
         return len(self.instructions)
 
@@ -134,7 +137,7 @@ class Instruction(object):
         if b_mode is not None:
             self.b_mode = MODES[b_mode] if isinstance(b_mode, str) else b_mode
         else:
-            self.b_mode = DIRECT
+            self.b_mode = IMMEDIATE if self.opcode == DAT and a_number != None else DIRECT
         self._a_number = a_number if a_number else 0
         self._b_number = b_number if b_number else 0
 
@@ -164,34 +167,44 @@ class Instruction(object):
 
     @property
     def a_number(self):
-        return self.core.signed_value(self._a_number) if self.core else self._a_number
+        return self._a_number
 
     @property
     def b_number(self):
-        return self.core.signed_value(self._b_number) if self.core else self._b_number
+        return self._b_number
 
     @a_number.setter
     def a_number(self, number):
-        self._a_number = self.core.trim(number) if self.core else number
+        self._a_number = self.core.trim_signed(number) if self.core else number
 
     @b_number.setter
     def b_number(self, number):
-        self._b_number = self.core.trim(number) if self.core else number
+        self._b_number = self.core.trim_signed(number) if self.core else number
 
     def __eq__(self, other):
         return (self.opcode == other.opcode and self.modifier == other.modifier and
                 self.a_mode == other.a_mode and self.a_number == other.a_number and
                 self.b_mode == other.b_mode and self.b_number == other.b_number)
 
-    def __repr__(self):
+    def __ne__(self, other):
+        return not self == other
+
+    def __str__(self):
         # inverse lookup the instruction values
         opcode   = next(key for key,value in OPCODES.iteritems() if value==self.opcode)
         modifier = next(key for key,value in MODIFIERS.iteritems() if value==self.modifier)
         a_mode   = next(key for key,value in MODES.iteritems() if value==self.a_mode)
         b_mode   = next(key for key,value in MODES.iteritems() if value==self.b_mode)
 
-        return "<%s.%s %s%d, %s%d>" % (opcode, modifier, a_mode, self.a_number,
-                                       b_mode, self.b_number)
+        return "%s.%s %s %s, %s %s" % (opcode,
+                                       modifier.ljust(2),
+                                       a_mode,
+                                       str(self.a_number).rjust(5),
+                                       b_mode,
+                                       str(self.b_number).rjust(5))
+
+    def __repr__(self):
+        return "<%s>" % self
 
 def parse(input, definitions={}):
     """ Parse a Redcode code from a line iterator (input) returning a Warrior
