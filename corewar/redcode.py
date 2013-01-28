@@ -105,8 +105,8 @@ DEFAULT_MODIFIERS = dict((tuple(OPCODES[opcode] for opcode in opcodes),
 class Warrior(object):
     "An encapsulation of a Redcode Warrior, with instructions and meta-data"
 
-    def __init__(self, name=None, author=None, date=None, version=None,
-                 strategy=None, start=0):
+    def __init__(self, name='Unnamed', author='Anonymous', date=None,
+                 version=None, strategy=None, start=0):
         self.name = name
         self.author = author
         self.date = date
@@ -137,7 +137,7 @@ class Instruction(object):
         if b_mode is not None:
             self.b_mode = MODES[b_mode] if isinstance(b_mode, str) else b_mode
         else:
-            self.b_mode = IMMEDIATE if self.opcode == DAT and a_number != None else DIRECT
+            self.b_mode = DIRECT
         self._a_number = a_number if a_number else 0
         self._b_number = b_number if b_number else 0
 

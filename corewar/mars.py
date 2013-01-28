@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 # coding: utf-8
 
 from copy import copy
@@ -13,9 +14,11 @@ class MARS(object):
     """The MARS. Encapsulates a simulation.
     """
 
-    def __init__(self, core=None, warriors=None, minimum_separation=100, randomize=True):
+    def __init__(self, core=None, warriors=None, minimum_separation=100, 
+                 randomize=True, max_processes=None):
         self.core = core if core else Core()
         self.minimum_separation = minimum_separation
+        self.max_processes = max_processes if max_processes else len(self.core)
         self.warriors = warriors if warriors else []
         if self.warriors:
             self.load_warriors(randomize)
@@ -50,7 +53,11 @@ class MARS(object):
                 self.core[warrior_position + i] = copy(instruction)
 
     def enqueue(self, warrior, address):
-        warrior.task_queue.append(self.core.trim(address))
+        """Enqueue another process into the warrior's task queue. Only if it's
+           not already full.
+        """
+        if len(warrior.task_queue) < self.max_processes:
+            warrior.task_queue.append(self.core.trim(address))
 
     def step(self):
         """Run one simulation step: execute one task of every active warrior.
@@ -162,30 +169,24 @@ class MARS(object):
                 def do_comparison(cmp):
                     if ir.modifier == M_A:
                         self.enqueue(warrior,
-                                     pc + 2 if cmp(ira.a_number, irb.a_number) else
-                                     pc + 1)
+                                     pc + (2 if cmp(ira.a_number, irb.a_number) else 1))
                     elif ir.modifier == M_B:
                         self.enqueue(warrior,
-                                     pc + 2 if cmp(ira.b_number, irb.b_number) else
-                                     pc + 1)
+                                     pc + (2 if cmp(ira.b_number, irb.b_number) else 1))
                     elif ir.modifier == M_AB:
                         self.enqueue(warrior,
-                                     pc + 2 if cmp(ira.a_number, irb.b_number) else
-                                     pc + 1)
+                                     pc + (2 if cmp(ira.a_number, irb.b_number) else 1))
                     elif ir.modifier == M_BA:
                         self.enqueue(warrior,
-                                     pc + 2 if cmp(ira.b_number, irb.a_number) else
-                                     pc + 1)
+                                     pc + (2 if cmp(ira.b_number, irb.a_number) else 1))
                     elif ir.modifier == M_F:
                         self.enqueue(warrior,
-                                     pc + 2 if cmp(ira.a_number, irb.a_number) and
-                                               cmp(ira.b_number, irb.b_number) else
-                                     pc + 1)
+                                     pc + (2 if cmp(ira.a_number, irb.a_number) and
+                                                cmp(ira.b_number, irb.b_number) else 1))
                     elif ir.modifier == M_X:
                         self.enqueue(warrior,
-                                     pc + 2 if cmp(ira.a_number, irb.b_number) and
-                                               cmp(ira.b_number, irb.a_number) else
-                                     pc + 1)
+                                     pc + (2 if cmp(ira.a_number, irb.b_number) and
+                                                cmp(ira.b_number, irb.a_number) else 1))
                     elif ir.modifier == M_I:
                         self.enqueue(warrior,
                                      pc + (2 if ira == irb else 1))
@@ -283,4 +284,81 @@ class MARS(object):
                     self.enqueue(warrior, pc + 1)
                 else:
                     raise ValueError("Invalid opcode: %d" % ir.opcode)
+
+if __name__ == "__main__":
+    import argparse
+    import redcode
+
+    parser = argparse.ArgumentParser(description='MARS (Memory Array Redcode Simulator)')
+    parser.add_argument('--rounds', '-r', metavar='ROUNDS', type=int, nargs='?',
+                        default=1, help='Rounds to play')
+    parser.add_argument('--size', '-s', metavar='CORESIZE', type=int, nargs='?',
+                        default=8000, help='The core size')
+    parser.add_argument('--cycles', '-c', metavar='CYCLES', type=int, nargs='?',
+                        default=80000, help='Cycles until tie')
+    parser.add_argument('--processes', '-p', metavar='MAXPROCESSES', type=int, nargs='?',
+                        default=8000, help='Max processes')
+    parser.add_argument('--length', '-l', metavar='MAXLENGTH', type=int, nargs='?',
+                        default=100, help='Max warrior length')
+    parser.add_argument('--distance', '-d', metavar='MINDISTANCE', type=int, nargs='?',
+                        default=100, help='Minimum warrior distance')
+    parser.add_argument('warriors', metavar='WARRIOR', type=str, nargs='+',
+                        help='Warrior redcode filename')
+
+    args = parser.parse_args()
+
+    # build environment
+    environment = {'CORESIZE': args.size,
+                   'CYCLES': args.cycles,
+                   'ROUNDS': args.rounds,
+                   'MAXPROCESSES': args.processes,
+                   'MAXLENGTH': args.length,
+                   'MINDISTANCE': args.distance}
+
+    # assemble warriors
+    warriors = [redcode.parse(open(filename), environment) for filename in args.warriors]
+
+    # initialize wins, losses and ties for each warrior
+    for warrior in warriors:
+        warrior.wins = warrior.ties = warrior.losses = 0
+
+    # for each round
+    for i in xrange(args.rounds):
+
+        # create new simulation
+        simulation = MARS(warriors=warriors,
+                          minimum_separation = args.distance,
+                          max_processes = args.processes)
+
+        active_warrior_to_stop = 1 if len(warriors) >= 2 else 0
+
+        for c in xrange(args.cycles):
+            simulation.step()
+
+            # if there's only one left, or are all dead, then stop simulation
+            if sum(1 if warrior.task_queue else 0 for warrior in warriors) <= active_warrior_to_stop:
+                for warrior in warriors:
+                    if warrior.task_queue:
+                        warrior.wins += 1
+                    else:
+                        warrior.losses += 1
+                break
+        else:
+            # running until max cycles: tie
+            for warrior in warriors:
+                if warrior.task_queue:
+                    warrior.ties += 1
+                else:
+                    warrior.losses += 1
+
+    # print results
+    print "Results: (%d rounds)" % args.rounds
+    print "%s %s %s %s" % ("Warrior (Author)".ljust(30), "wins".rjust(5),
+                           "ties".rjust(5), "losses".rjust(5))
+    for warrior in warriors:
+        print "%s %s %s %s" % (("%s (%s)" % (warrior.name, warrior.author)).ljust(30),
+                               str(warrior.wins).rjust(5),
+                               str(warrior.ties).rjust(5),
+                               str(warrior.losses).rjust(5))
+
 

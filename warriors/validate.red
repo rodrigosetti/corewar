@@ -110,7 +110,7 @@ l14     slt #0,count       ;check cycle timer
 fail    mov count,flag     ;save counter for post-mortem debugging
         mov t1,count       ;kill counter
         jmp clear          ;and auto-destruct
-flag    dat #0
+flag    dat #0, #0
 success mov flag,clear     ;cancel autodestruct
 last    jmp 0              ;and loop forever
 

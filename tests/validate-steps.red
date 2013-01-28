@@ -1,6 +1,5 @@
 ; This is a core-log of 255 steps of validate.red
 
-;ACTIVE: 00000
 l00000   SPL.B  $     8, $     3
 l00001   JMZ.B  <    -1, $     0
 l00002   DJN.B  $     0, #    36
@@ -102,6 +101,7 @@ l00097   DAT
 l00098   DAT
 l00099   DAT
 l00100   DAT
+;ACTIVE: 00000
 
 l00000   SPL.B  $     8, $     3
 l00001   JMZ.B  <    -1, $     0
