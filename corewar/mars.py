@@ -8,7 +8,25 @@ from random import randint
 from core import Core, DEFAULT_INITIAL_INSTRUCTION
 from redcode import *
 
-__all__ = ['MARS']
+__all__ = ['MARS', 'EVENT_EXECUTED' 'EVENT_I_WRITE', 'EVENT_I_READ',
+           'EVENT_A_DEC', 'EVENT_A_INC', 'EVENT_B_DEC', 'EVENT_B_INC',
+           'EVENT_A_READ', 'EVENT_A_WRITE', 'EVENT_B_READ', 'EVENT_B_WRITE',
+           'EVENT_A_ARITH', 'EVENT_B_ARITH']
+
+# Event types
+EVENT_EXECUTED = 0
+EVENT_I_WRITE  = 1
+EVENT_I_READ   = 2
+EVENT_A_DEC    = 3
+EVENT_A_INC    = 4
+EVENT_B_DEC    = 5
+EVENT_B_INC    = 6
+EVENT_A_READ   = 7
+EVENT_A_WRITE  = 8
+EVENT_B_READ   = 9
+EVENT_B_WRITE  = 10
+EVENT_A_ARITH  = 11
+EVENT_B_ARITH  = 12
 
 class MARS(object):
     """The MARS. Encapsulates a simulation.
@@ -22,6 +40,12 @@ class MARS(object):
         self.warriors = warriors if warriors else []
         if self.warriors:
             self.load_warriors(randomize)
+
+    def core_event(self, warrior, address, event_type):
+        """Supposed to be implemented by subclasses to handle core
+           events.
+        """
+        pass
 
     def reset(self, clear_instruction=DEFAULT_INITIAL_INSTRUCTION):
         "Clears core and re-loads warriors."
@@ -91,8 +115,10 @@ class MARS(object):
                         # pre-decrement, if needed
                         if ir.a_mode == PREDEC_A:
                             self.core[pc + wpa].a_number -= 1
+                            self.core_event(warrior, pc + wpa, EVENT_A_DEC)
                         elif ir.a_mode == PREDEC_B:
                             self.core[pc + wpa].b_number -= 1
+                            self.core_event(warrior, pc + wpa, EVENT_B_DEC)
 
                         # calculate the indirect address, from A or B number
                         if ir.a_mode in (PREDEC_A, INDIRECT_A, POSTINC_A):
@@ -108,8 +134,10 @@ class MARS(object):
                 # post-increment, if needed
                 if ir.a_mode == POSTINC_A:
                     self.core[pip].a_number += 1
+                    self.core_event(warrior, pip, EVENT_A_INC)
                 elif ir.a_mode == POSTINC_B:
                     self.core[pip].b_number += 1
+                    self.core_event(warrior, pip, EVENT_B_INC)
 
                 # evaluate the B-operand - pretty much the same as A
                 if ir.b_mode == IMMEDIATE:
@@ -123,8 +151,10 @@ class MARS(object):
 
                         if ir.b_mode == PREDEC_A:
                             self.core[pc + wpb].a_number -= 1
+                            self.core_event(warrior, pc + wpb, EVENT_A_DEC)
                         elif ir.b_mode == PREDEC_B:
                             self.core[pc + wpb].b_number -= 1
+                            self.core_event(warrior, pc + wpb, EVENT_B_DEC)
 
                         if ir.b_mode in (PREDEC_A, INDIRECT_A, POSTINC_A):
                             rpb = self.core.trim_read(rpb + self.core[pc + rpb].a_number)
@@ -137,26 +167,52 @@ class MARS(object):
 
                 if ir.b_mode == POSTINC_A:
                     self.core[pip].a_number += 1
+                    self.core_event(warrior, pip, EVENT_A_INC)
                 elif ir.b_mode == POSTINC_B:
                     self.core[pip].b_number += 1
+                    self.core_event(warrior, pip, EVENT_B_INC)
 
                 # arithmetic common code
                 def do_arithmetic(op):
                     try:
                         if ir.modifier == M_A:
                             self.core[pc + wpb].a_number = op(irb.a_number, ira.a_number)
+                            self.core_event(warrior, pc + wpb, EVENT_A_WRITE)
+                            self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                            self.core_event(warrior, pc + rpb, EVENT_A_READ)
                         elif ir.modifier == M_B:
                             self.core[pc + wpb].b_number = op(irb.b_number, ira.b_number)
+                            self.core_event(warrior, pc + wpb, EVENT_B_WRITE)
+                            self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                            self.core_event(warrior, pc + rpb, EVENT_B_READ)
                         elif ir.modifier == M_AB:
                             self.core[pc + wpb].b_number = op(irb.b_number, ira.a_number)
+                            self.core_event(warrior, pc + wpb, EVENT_B_WRITE)
+                            self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                            self.core_event(warrior, pc + rpb, EVENT_B_READ)
                         elif ir.modifier == M_BA:
                             self.core[pc + wpb].a_number = op(irb.b_number, ira.a_number)
+                            self.core_event(warrior, pc + wpb, EVENT_A_WRITE)
+                            self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                            self.core_event(warrior, pc + rpb, EVENT_B_READ)
                         elif ir.modifier == M_F or ir.modifier == M_I:
                             self.core[pc + wpb].a_number = op(irb.a_number, ira.a_number)
                             self.core[pc + wpb].b_number = op(irb.b_number, ira.b_number)
+                            self.core_event(warrior, pc + wpb, EVENT_A_WRITE)
+                            self.core_event(warrior, pc + wpb, EVENT_B_WRITE)
+                            self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                            self.core_event(warrior, pc + rpb, EVENT_A_READ)
+                            self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                            self.core_event(warrior, pc + rpb, EVENT_B_READ)
                         elif ir.modifier == M_X:
                             self.core[pc + wpb].b_number = op(irb.b_number, ira.a_number)
                             self.core[pc + wpb].a_number = op(irb.a_number, ira.b_number)
+                            self.core_event(warrior, pc + wpb, EVENT_A_WRITE)
+                            self.core_event(warrior, pc + wpb, EVENT_B_WRITE)
+                            self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                            self.core_event(warrior, pc + rpb, EVENT_A_READ)
+                            self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                            self.core_event(warrior, pc + rpb, EVENT_B_READ)
                         else:
                             raise ValueError("Invalid modifier: %d" % ir.modifier)
 
@@ -170,28 +226,48 @@ class MARS(object):
                     if ir.modifier == M_A:
                         self.enqueue(warrior,
                                      pc + (2 if cmp(ira.a_number, irb.a_number) else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpb, EVENT_A_READ)
                     elif ir.modifier == M_B:
                         self.enqueue(warrior,
                                      pc + (2 if cmp(ira.b_number, irb.b_number) else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                        self.core_event(warrior, pc + rpb, EVENT_B_READ)
                     elif ir.modifier == M_AB:
                         self.enqueue(warrior,
                                      pc + (2 if cmp(ira.a_number, irb.b_number) else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpb, EVENT_B_READ)
                     elif ir.modifier == M_BA:
                         self.enqueue(warrior,
                                      pc + (2 if cmp(ira.b_number, irb.a_number) else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                        self.core_event(warrior, pc + rpb, EVENT_A_READ)
                     elif ir.modifier == M_F:
                         self.enqueue(warrior,
                                      pc + (2 if cmp(ira.a_number, irb.a_number) and
                                                 cmp(ira.b_number, irb.b_number) else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpb, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                        self.core_event(warrior, pc + rpb, EVENT_B_READ)
                     elif ir.modifier == M_X:
                         self.enqueue(warrior,
                                      pc + (2 if cmp(ira.a_number, irb.b_number) and
                                                 cmp(ira.b_number, irb.a_number) else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpb, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                        self.core_event(warrior, pc + rpb, EVENT_B_READ)
                     elif ir.modifier == M_I:
                         self.enqueue(warrior,
                                      pc + (2 if ira == irb else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_I_READ)
+                        self.core_event(warrior, pc + rpb, EVENT_I_READ)
                     else:
                         raise ValueError("Invalid modifier: %d" % ir.modifier)
+
+                self.core_event(warrior, pc, EVENT_EXECUTED)
 
                 if ir.opcode == DAT:
                     # does not enqueue next instruction, therefore, killing the
@@ -200,20 +276,38 @@ class MARS(object):
                 elif ir.opcode == MOV:
                     if ir.modifier == M_A:
                         self.core[pc + wpb].a_number = ira.a_number
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + wpb, EVENT_A_WRITE)
                     elif ir.modifier == M_B:
                         self.core[pc + wpb].b_number = ira.b_number
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                        self.core_event(warrior, pc + wpb, EVENT_B_WRITE)
                     elif ir.modifier == M_AB:
                         self.core[pc + wpb].b_number = ira.a_number
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + wpb, EVENT_B_WRITE)
                     elif ir.modifier == M_BA:
                         self.core[pc + wpb].a_number = ira.b_number
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                        self.core_event(warrior, pc + wpb, EVENT_A_WRITE)
                     elif ir.modifier == M_F:
                         self.core[pc + wpb].a_number = ira.a_number
                         self.core[pc + wpb].b_number = ira.b_number
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                        self.core_event(warrior, pc + wpb, EVENT_A_WRITE)
+                        self.core_event(warrior, pc + wpb, EVENT_B_WRITE)
                     elif ir.modifier == M_X:
                         self.core[pc + wpb].b_number = ira.a_number
                         self.core[pc + wpb].a_number = ira.b_number
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                        self.core_event(warrior, pc + wpb, EVENT_A_WRITE)
+                        self.core_event(warrior, pc + wpb, EVENT_B_WRITE)
                     elif ir.modifier == M_I:
                         self.core[pc + wpb] = ira
+                        self.core_event(warrior, pc + rpa, EVENT_I_READ)
+                        self.core_event(warrior, pc + wpb, EVENT_I_WRITE)
                     else:
                         raise ValueError("Invalid modifier: %d" % ir.modifier)
 
@@ -234,22 +328,30 @@ class MARS(object):
                 elif ir.opcode == JMZ:
                     if ir.modifier == M_A or ir.modifier == M_BA:
                         self.enqueue(warrior, pc + (rpa if irb.a_number == 0 else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
                     elif ir.modifier == M_B or ir.modifier == M_AB:
                         self.enqueue(warrior, pc + (rpa if irb.b_number == 0 else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
                     elif ir.modifier in (M_F, M_X, M_I):
                         self.enqueue(warrior,
                                      pc + (rpa if irb.a_number == irb.b_number == 0 else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
                     else:
                         raise ValueError("Invalid modifier: %d" % ir.modifier)
                 elif ir.opcode == JMN:
                     if ir.modifier == M_A or ir.modifier == M_BA:
                         self.enqueue(warrior, pc + (rpa if irb.a_number != 0 else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
                     elif ir.modifier == M_B or ir.modifier == M_AB:
                         self.enqueue(warrior, pc + (rpa if irb.b_number != 0 else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
                     elif ir.modifier in (M_F, M_X, M_I):
                         self.enqueue(warrior,
                                      pc + (rpa if irb.a_number != 0 or
                                                   irb.b_number != 0 else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
                     else:
                         raise ValueError("Invalid modifier: %d" % ir.modifier)
                 elif ir.opcode == DJN:
@@ -257,10 +359,14 @@ class MARS(object):
                         self.core[pc + wpb].a_number -= 1
                         irb.a_number -= 1
                         self.enqueue(warrior, pc + (rpa if irb.a_number != 0 else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpa, EVENT_A_DEC)
                     elif ir.modifier == M_B or ir.modifier == M_AB:
                         self.core[pc + wpb].b_number -= 1
                         irb.b_number -= 1
                         self.enqueue(warrior, pc + (rpa if irb.b_number != 0 else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                        self.core_event(warrior, pc + rpa, EVENT_B_DEC)
                     elif ir.modifier in (M_F, M_X, M_I):
                         self.core[pc + wpb].a_number -= 1
                         irb.a_number -= 1
@@ -269,6 +375,10 @@ class MARS(object):
                         self.enqueue(warrior,
                                      pc + (rpa if irb.a_number != 0 or
                                                   irb.b_number != 0 else 1))
+                        self.core_event(warrior, pc + rpa, EVENT_A_READ)
+                        self.core_event(warrior, pc + rpa, EVENT_B_READ)
+                        self.core_event(warrior, pc + rpa, EVENT_A_DEC)
+                        self.core_event(warrior, pc + rpa, EVENT_B_DEC)
                     else:
                         raise ValueError("Invalid modifier: %d" % ir.modifier)
                 elif ir.opcode == SPL:
