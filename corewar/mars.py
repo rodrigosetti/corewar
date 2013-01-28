@@ -14,7 +14,7 @@ class MARS(object):
     """The MARS. Encapsulates a simulation.
     """
 
-    def __init__(self, core=None, warriors=None, minimum_separation=100, 
+    def __init__(self, core=None, warriors=None, minimum_separation=100,
                  randomize=True, max_processes=None):
         self.core = core if core else Core()
         self.minimum_separation = minimum_separation

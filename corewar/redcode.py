@@ -137,7 +137,7 @@ class Instruction(object):
         if b_mode is not None:
             self.b_mode = MODES[b_mode] if isinstance(b_mode, str) else b_mode
         else:
-            self.b_mode = DIRECT
+            self.b_mode = IMMEDIATE if self.opcode == DAT and a_number != None else DIRECT
         self._a_number = a_number if a_number else 0
         self._b_number = b_number if b_number else 0
 
