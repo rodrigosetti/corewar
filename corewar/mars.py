@@ -8,7 +8,7 @@ from random import randint
 from core import Core, DEFAULT_INITIAL_INSTRUCTION
 from redcode import *
 
-__all__ = ['MARS', 'EVENT_EXECUTED' 'EVENT_I_WRITE', 'EVENT_I_READ',
+__all__ = ['MARS', 'EVENT_EXECUTED', 'EVENT_I_WRITE', 'EVENT_I_READ',
            'EVENT_A_DEC', 'EVENT_A_INC', 'EVENT_B_DEC', 'EVENT_B_INC',
            'EVENT_A_READ', 'EVENT_A_WRITE', 'EVENT_B_READ', 'EVENT_B_WRITE',
            'EVENT_A_ARITH', 'EVENT_B_ARITH']
@@ -75,6 +75,7 @@ class MARS(object):
             # copy warrior's instructions to the core
             for i, instruction in enumerate(warrior.instructions):
                 self.core[warrior_position + i] = copy(instruction)
+                self.core_event(warrior, warrior_position + i, EVENT_I_WRITE)
 
     def enqueue(self, warrior, address):
         """Enqueue another process into the warrior's task queue. Only if it's
@@ -82,6 +83,12 @@ class MARS(object):
         """
         if len(warrior.task_queue) < self.max_processes:
             warrior.task_queue.append(self.core.trim(address))
+
+    def __iter__(self):
+        return iter(self.core)
+
+    def __len__(self):
+        return len(self.core)
 
     def step(self):
         """Run one simulation step: execute one task of every active warrior.
@@ -412,7 +419,7 @@ if __name__ == "__main__":
                         default=100, help='Max warrior length')
     parser.add_argument('--distance', '-d', metavar='MINDISTANCE', type=int, nargs='?',
                         default=100, help='Minimum warrior distance')
-    parser.add_argument('warriors', metavar='WARRIOR', type=str, nargs='+',
+    parser.add_argument('warriors', metavar='WARRIOR', type=file, nargs='+',
                         help='Warrior redcode filename')
 
     args = parser.parse_args()
@@ -426,7 +433,7 @@ if __name__ == "__main__":
                    'MINDISTANCE': args.distance}
 
     # assemble warriors
-    warriors = [redcode.parse(open(filename), environment) for filename in args.warriors]
+    warriors = [redcode.parse(file, environment) for file in args.warriors]
 
     # initialize wins, losses and ties for each warrior
     for warrior in warriors:
@@ -463,10 +470,10 @@ if __name__ == "__main__":
 
     # print results
     print "Results: (%d rounds)" % args.rounds
-    print "%s %s %s %s" % ("Warrior (Author)".ljust(30), "wins".rjust(5),
+    print "%s %s %s %s" % ("Warrior (Author)".ljust(40), "wins".rjust(5),
                            "ties".rjust(5), "losses".rjust(5))
     for warrior in warriors:
-        print "%s %s %s %s" % (("%s (%s)" % (warrior.name, warrior.author)).ljust(30),
+        print "%s %s %s %s" % (("%s (%s)" % (warrior.name, warrior.author)).ljust(40),
                                str(warrior.wins).rjust(5),
                                str(warrior.ties).rjust(5),
                                str(warrior.losses).rjust(5))
