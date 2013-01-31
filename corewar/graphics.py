@@ -18,10 +18,12 @@ INSTRUCTIONS_PER_LINE = 100
 INSTRUCTION_SIZE_X = 10
 INSTRUCTION_SIZE_Y = 10
 
+I_AREA = ((0,0), (INSTRUCTION_SIZE_X, INSTRUCTION_SIZE_Y))
+
 # initialize pygame engine
 pygame.init()
 
-CORE_FONT = pygame.font.SysFont("monospace", INSTRUCTION_SIZE_X)
+CORE_FONT = pygame.font.SysFont("monospace", INSTRUCTION_SIZE_X-1)
 OPCODE_GLIPHS = {
     DAT: 'D',
     MOV: 'M',
@@ -96,33 +98,33 @@ class PygameMARS(MARS):
                                                     True,
                                                     warrior.color[1],
                                                     DEFAULT_BG_COLOR),
-                                   position)
+                                   position, area=I_AREA)
             self.recent_events.blit(CORE_FONT.render(OPCODE_GLIPHS[instruction.opcode],
                                                      True,
                                                      WHITE,
                                                      DEFAULT_BG_COLOR),
-                                    position)
+                                    position, area=I_AREA)
         elif event_type == EVENT_EXECUTED:
             # In case of execution, we write the background with warrior's color
             self.core_surface.blit(CORE_FONT.render(OPCODE_GLIPHS[instruction.opcode],
                                                     True,
                                                     WHITE,
                                                     warrior.color[0]),
-                                   position)
+                                   position, area=I_AREA)
             self.recent_events.blit(CORE_FONT.render(OPCODE_GLIPHS[instruction.opcode],
                                                      True,
                                                      BLACK,
                                                      warrior.color[1]),
-                                    position)
+                                    position, area=I_AREA)
         elif event_type in (EVENT_A_ARITH, EVENT_B_ARITH, EVENT_A_DEC,
                             EVENT_B_DEC, EVENT_A_INC, EVENT_B_INC):
             # In case of arithmetic modification, or increment/decrement, we
             # write a rectangle around the instruction
             pygame.draw.rect(self.core_surface, warrior.color[0],
-                             (position, (INSTRUCTION_SIZE_X-1, INSTRUCTION_SIZE_Y-1)),
+                             (position, (INSTRUCTION_SIZE_X, INSTRUCTION_SIZE_Y)),
                               1)
             pygame.draw.rect(self.recent_events, warrior.color[1],
-                             (position, (INSTRUCTION_SIZE_X-1, INSTRUCTION_SIZE_Y-1)),
+                             (position, (INSTRUCTION_SIZE_X, INSTRUCTION_SIZE_Y)),
                               1)
 
 
