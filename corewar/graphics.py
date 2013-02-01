@@ -8,12 +8,6 @@ from core import DEFAULT_INITIAL_INSTRUCTION
 from mars import *
 from redcode import *
 
-#: Opcode to ASCII for drawing
-OPCODES_ASCII = {'DAT': 'D', 'MOV': 'M', 'ADD': '+', 'SUB': '-', 'MUL': '*',
-                 'DIV': '/', 'MOD': '%', 'JMP': 'J', 'JMZ': 'Z', 'JMN': 'N',
-                 'DJN': 'n', 'SPL': 'S', 'SLT': '<', 'CMP': '=', 'SEQ': '=',
-                 'SNE': '!', 'NOP': ';'}
-
 INSTRUCTIONS_PER_LINE = 100
 INSTRUCTION_SIZE_X = 9
 INSTRUCTION_SIZE_Y = 9
@@ -186,6 +180,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    if len(args.warriors) > len(WARRIOR_COLORS):
+        print >> sys.stderr, "Please specify a maximum of %d warriors." % len(WARRIOR_COLORS)
+        sys.exit(1)
+
     # build environment
     environment = {'CORESIZE': args.size,
                    'CYCLES': args.cycles,
@@ -193,10 +191,6 @@ if __name__ == "__main__":
                    'MAXPROCESSES': args.processes,
                    'MAXLENGTH': args.length,
                    'MINDISTANCE': args.distance}
-
-    if len(args.warriors) > WARRIOR_COLORS:
-        print >> sys.stderr, "Please specify a maximum of %d warriors." % len(WARRIOR_COLORS)
-        sys.exit(1)
 
     # assemble warriors
     warriors = [parse(file, environment) for file in args.warriors]
