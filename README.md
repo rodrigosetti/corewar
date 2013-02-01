@@ -26,10 +26,10 @@ for digital supremacy. Warriors are written in an Assembly dialect called
 
 This is a Python implementation of the MARS (Memory Array Redcode Simulator).
 
-    usage: mars.py [-h] [--rounds [ROUNDS]] [--size [CORESIZE]]
-                   [--cycles [CYCLES]] [--processes [MAX_PROCESSES]]
-                   [--length [MAX_LENGTH]] [--distance [MIN_DISTANCE]]
-                   WARRIOR [WARRIOR ...]
+    usage: graphics.py [-h] [--rounds [ROUNDS]] [--paused] [--size [CORESIZE]]
+                       [--cycles [CYCLES]] [--processes [MAXPROCESSES]]
+                       [--length [MAXLENGTH]] [--distance [MINDISTANCE]]
+                       WARRIOR [WARRIOR ...]
 
     MARS (Memory Array Redcode Simulator)
 
@@ -40,6 +40,7 @@ This is a Python implementation of the MARS (Memory Array Redcode Simulator).
       -h, --help            show this help message and exit
       --rounds [ROUNDS], -r [ROUNDS]
                             Rounds to play
+      --paused              Start each round paused
       --size [CORESIZE], -s [CORESIZE]
                             The core size
       --cycles [CYCLES], -c [CYCLES]
@@ -50,4 +51,3 @@ This is a Python implementation of the MARS (Memory Array Redcode Simulator).
                             Max warrior length
       --distance [MINDISTANCE], -d [MINDISTANCE]
                             Minimum warrior distance
-

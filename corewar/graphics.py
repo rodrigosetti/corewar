@@ -15,38 +15,76 @@ OPCODES_ASCII = {'DAT': 'D', 'MOV': 'M', 'ADD': '+', 'SUB': '-', 'MUL': '*',
                  'SNE': '!', 'NOP': ';'}
 
 INSTRUCTIONS_PER_LINE = 100
-INSTRUCTION_SIZE_X = 10
-INSTRUCTION_SIZE_Y = 10
+INSTRUCTION_SIZE_X = 9
+INSTRUCTION_SIZE_Y = 9
 
-I_AREA = ((0,0), (INSTRUCTION_SIZE_X, INSTRUCTION_SIZE_Y))
+I_SIZE = (INSTRUCTION_SIZE_X, INSTRUCTION_SIZE_Y)
+I_AREA = ((0,0), I_SIZE)
 
 # initialize pygame engine
 pygame.init()
 
-CORE_FONT = pygame.font.SysFont("monospace", INSTRUCTION_SIZE_X-1)
-OPCODE_GLIPHS = {
-    DAT: 'D',
-    MOV: 'M',
-    ADD: '+',
-    SUB: '-',
-    MUL: '*',
-    DIV: '/',
-    MOD: '%',
-    JMP: 'J',
-    JMZ: 'Z',
-    JMN: 'N',
-    DJN: 'j',
-    SPL: 'S',
-    SLT: '<',
-    CMP: '=',
-    SEQ: '=',
-    SNE: '!',
-    NOP: ';'}
+IMAGE_BG_COLOR = (255,255,254,255)
+IMAGE_FG_COLOR = (0,0,1,255)
 
-DEFAULT_FG_COLOR = (100,100,100)
-WHITE = (255,255,255)
-BLACK = (0, 0, 0)
+def load_opcode_surfaces():
+    "Load the images of the opcodes from the file"
+    all_instructions = pygame.image.load('pixels/instructions.png')
+    class Y:
+        y = -INSTRUCTION_SIZE_Y
+        def __call__(self):
+            self.y += INSTRUCTION_SIZE_Y
+            return self.y
+    y = Y()
+
+    return {
+        DAT: all_instructions.subsurface(((0,y()), I_SIZE)),
+        MOV: all_instructions.subsurface(((0,y()), I_SIZE)),
+        ADD: all_instructions.subsurface(((0,y()), I_SIZE)),
+        SUB: all_instructions.subsurface(((0,y()), I_SIZE)),
+        MUL: all_instructions.subsurface(((0,y()), I_SIZE)),
+        DIV: all_instructions.subsurface(((0,y()), I_SIZE)),
+        MOD: all_instructions.subsurface(((0,y()), I_SIZE)),
+        JMP: all_instructions.subsurface(((0,y()), I_SIZE)),
+        JMZ: all_instructions.subsurface(((0,y()), I_SIZE)),
+        JMN: all_instructions.subsurface(((0,y()), I_SIZE)),
+        DJN: all_instructions.subsurface(((0,y()), I_SIZE)),
+        SPL: all_instructions.subsurface(((0,y()), I_SIZE)),
+        SLT: all_instructions.subsurface(((0,y()), I_SIZE)),
+        CMP: all_instructions.subsurface(((0,y()), I_SIZE)),
+        SEQ: all_instructions.subsurface(((0,y()), I_SIZE)),
+        SNE: all_instructions.subsurface(((0,y()), I_SIZE)),
+        NOP: all_instructions.subsurface(((0,y()), I_SIZE))}
+
+def opcode_surface(opcode, foreground=None, background=None):
+    "Return a surface representing an instruction in the core"
+    surface = pygame.Surface(I_SIZE)
+    opcode_surface = OPCODE_SURFACES[opcode].convert(surface)
+
+    if background:
+        surface.fill(background) # fill background color
+        opcode_surface.set_colorkey(IMAGE_BG_COLOR) # make image bg transparent
+        surface.blit(opcode_surface, (0,0)) # blit opcode in background
+        surface.set_colorkey(IMAGE_FG_COLOR) # make image fg transparent
+
+    if foreground:
+        fg_surface = pygame.Surface(I_SIZE)
+        fg_surface.fill(foreground) # fill foreground color
+        opcode_surface.set_colorkey(IMAGE_FG_COLOR) # make image fg transparent
+        fg_surface.blit(opcode_surface, (0,0)) # blit opcode in background
+        fg_surface.set_colorkey(IMAGE_BG_COLOR) # make image bg transparent
+
+        surface.blit(fg_surface, (0,0)) # blit in background
+
+    return surface
+
+
+OPCODE_SURFACES = load_opcode_surfaces()
+
 DEFAULT_BG_COLOR = (0, 0, 0)
+DEFAULT_FG_COLOR = (60,60,60)
+BLACK = (0, 0, 0)
+WHITE = (255,255,255)
 
 # Colors are dark and bright
 WARRIOR_COLORS = (((0,0,100), (0,0,255)),
@@ -57,6 +95,7 @@ WARRIOR_COLORS = (((0,0,100), (0,0,255)),
                   ((100,100,0), (255,255,0)))
 
 class PygameMARS(MARS):
+    "A MARS with a surface drawing of the core"
 
     def __init__(self, *args, **kargs):
         super(PygameMARS, self).__init__(*args, **kargs)
@@ -69,10 +108,9 @@ class PygameMARS(MARS):
     def reset(self, clear_instruction=DEFAULT_INITIAL_INSTRUCTION):
         self.core.clear(clear_instruction)
         for n, instruction in enumerate(self):
-            self.core_surface.blit(CORE_FONT.render(OPCODE_GLIPHS[instruction.opcode],
-                                                    True, # anti-alias
-                                                    DEFAULT_FG_COLOR,
-                                                    DEFAULT_BG_COLOR),
+            self.core_surface.blit(opcode_surface(instruction.opcode,
+                                                  DEFAULT_FG_COLOR,
+                                                  DEFAULT_BG_COLOR),
                                    ((n % INSTRUCTIONS_PER_LINE) * INSTRUCTION_SIZE_X,
                                     (n / INSTRUCTIONS_PER_LINE) * INSTRUCTION_SIZE_Y))
         self.load_warriors()
@@ -94,27 +132,23 @@ class PygameMARS(MARS):
         if event_type in (EVENT_I_WRITE, EVENT_A_WRITE, EVENT_B_WRITE):
             # In case of a write event, we write the foreground with the
             # warrior's color
-            self.core_surface.blit(CORE_FONT.render(OPCODE_GLIPHS[instruction.opcode],
-                                                    True,
-                                                    warrior.color[1],
-                                                    DEFAULT_BG_COLOR),
+            self.core_surface.blit(opcode_surface(instruction.opcode,
+                                                  warrior.color[1],
+                                                  None),
                                    position, area=I_AREA)
-            self.recent_events.blit(CORE_FONT.render(OPCODE_GLIPHS[instruction.opcode],
-                                                     True,
-                                                     WHITE,
-                                                     DEFAULT_BG_COLOR),
+            self.recent_events.blit(opcode_surface(instruction.opcode,
+                                                   WHITE,
+                                                   DEFAULT_BG_COLOR),
                                     position, area=I_AREA)
         elif event_type == EVENT_EXECUTED:
             # In case of execution, we write the background with warrior's color
-            self.core_surface.blit(CORE_FONT.render(OPCODE_GLIPHS[instruction.opcode],
-                                                    True,
-                                                    WHITE,
-                                                    warrior.color[0]),
+            self.core_surface.blit(opcode_surface(instruction.opcode,
+                                                  WHITE,
+                                                  warrior.color[0]),
                                    position, area=I_AREA)
-            self.recent_events.blit(CORE_FONT.render(OPCODE_GLIPHS[instruction.opcode],
-                                                     True,
-                                                     BLACK,
-                                                     warrior.color[1]),
+            self.recent_events.blit(opcode_surface(instruction.opcode,
+                                                   BLACK,
+                                                   warrior.color[1]),
                                     position, area=I_AREA)
         elif event_type in (EVENT_A_ARITH, EVENT_B_ARITH, EVENT_A_DEC,
                             EVENT_B_DEC, EVENT_A_INC, EVENT_B_INC):
@@ -293,11 +327,13 @@ if __name__ == "__main__":
                                str(warrior.ties).rjust(5),
                                str(warrior.losses).rjust(5))
 
-    # keeps display open if paused, until quit
-    while paused:
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                paused = False
+    if not stop_rounds and not next_round:
+        # keeps display open, until quit
+        paused = True
+        while paused:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    paused = False
 
     # exit pygame
     pygame.quit()
