@@ -12,14 +12,28 @@ INSTRUCTIONS_PER_LINE = 100
 INSTRUCTION_SIZE_X = 9
 INSTRUCTION_SIZE_Y = 9
 
+ZOOM_VIEW_WIDTH = 200
+
 I_SIZE = (INSTRUCTION_SIZE_X, INSTRUCTION_SIZE_Y)
 I_AREA = ((0,0), I_SIZE)
 
-# initialize pygame engine
-pygame.init()
-
 IMAGE_BG_COLOR = (255,255,254,255)
 IMAGE_FG_COLOR = (0,0,1,255)
+
+OPCODE_SURFACES = None
+
+DEFAULT_BG_COLOR = (0, 0, 0)
+DEFAULT_FG_COLOR = (60,60,60)
+BLACK = (0, 0, 0)
+WHITE = (255,255,255)
+
+# Colors are dark and bright
+WARRIOR_COLORS = (((0,0,100), (0,0,255)),
+                  ((0,100,0), (0,255,0)),
+                  ((0,100,100), (0,255,255)),
+                  ((100,0,0), (255,0,0)),
+                  ((100,0,100), (255,0,255)),
+                  ((100,100,0), (255,255,0)))
 
 def load_opcode_surfaces():
     "Load the images of the opcodes from the file"
@@ -72,22 +86,6 @@ def opcode_surface(opcode, foreground=None, background=None):
 
     return surface
 
-
-OPCODE_SURFACES = load_opcode_surfaces()
-
-DEFAULT_BG_COLOR = (0, 0, 0)
-DEFAULT_FG_COLOR = (60,60,60)
-BLACK = (0, 0, 0)
-WHITE = (255,255,255)
-
-# Colors are dark and bright
-WARRIOR_COLORS = (((0,0,100), (0,0,255)),
-                  ((0,100,0), (0,255,0)),
-                  ((0,100,100), (0,255,255)),
-                  ((100,0,0), (255,0,0)),
-                  ((100,0,100), (255,0,255)),
-                  ((100,100,0), (255,255,0)))
-
 class PygameMARS(MARS):
     "A MARS with a surface drawing of the core"
 
@@ -108,6 +106,12 @@ class PygameMARS(MARS):
                                    ((n % INSTRUCTIONS_PER_LINE) * INSTRUCTION_SIZE_X,
                                     (n / INSTRUCTIONS_PER_LINE) * INSTRUCTION_SIZE_Y))
         self.load_warriors()
+
+    def load_warriors(self):
+        super(PygameMARS, self).load_warriors()
+        for instruction in self:
+            instruction.fg_color = DEFAULT_FG_COLOR
+            instruction.bg_color = DEFAULT_BG_COLOR
 
     def step(self):
         self.recent_events.fill(DEFAULT_BG_COLOR)
@@ -134,6 +138,7 @@ class PygameMARS(MARS):
                                                    WHITE,
                                                    DEFAULT_BG_COLOR),
                                     position, area=I_AREA)
+            instruction.fg_color = warrior.color[1]
         elif event_type == EVENT_EXECUTED:
             # In case of execution, we write the background with warrior's color
             self.core_surface.blit(opcode_surface(instruction.opcode,
@@ -144,6 +149,8 @@ class PygameMARS(MARS):
                                                    BLACK,
                                                    warrior.color[1]),
                                     position, area=I_AREA)
+            instruction.fg_color = WHITE
+            instruction.bg_color = warrior.color[0]
         elif event_type in (EVENT_A_ARITH, EVENT_B_ARITH, EVENT_A_DEC,
                             EVENT_B_DEC, EVENT_A_INC, EVENT_B_INC):
             # In case of arithmetic modification, or increment/decrement, we
@@ -205,8 +212,21 @@ if __name__ == "__main__":
                             max_processes = args.processes)
     simulation.warriors = warriors
 
+    # initialize pygame engine
+    pygame.init()
+
+    # core instruction's font
+    core_font = pygame.font.SysFont("monospace", 12)
+
+    # Load surfaces from file
+    OPCODE_SURFACES = load_opcode_surfaces()
+
     # create display
-    display_surface = pygame.display.set_mode(simulation.size)
+    display_surface = pygame.display.set_mode((simulation.size[0] + ZOOM_VIEW_WIDTH,
+                                               simulation.size[1]))
+
+    # initializations
+    c_address = 0
 
     # control variables
     paused = False
@@ -240,6 +260,28 @@ if __name__ == "__main__":
         for cycle in xrange(args.cycles):
             # step one simulation in MARS
             simulation.step()
+
+            # get mouse position
+            mouse_pos = pygame.mouse.get_pos()
+            # calculate address based on mouse position if position is over core
+            if 0 <= mouse_pos[0] <= simulation.size[0] and 0 <= mouse_pos[1] <= simulation.size[1]:
+                c_address = (INSTRUCTIONS_PER_LINE * (mouse_pos[1]/INSTRUCTION_SIZE_Y) +
+                             (mouse_pos[0] / INSTRUCTION_SIZE_X))
+
+            # clear display part of instructions
+            display_surface.fill(BLACK, ((simulation.size[0], 0),
+                                         (ZOOM_VIEW_WIDTH, simulation.size[1])))
+            for n, address in enumerate(xrange(c_address-18, c_address+18)):
+                instruction = simulation[address]
+                i_surface = core_font.render("%04d %s" % (address,
+                                                          instruction),
+                                               True,
+                                               instruction.fg_color)
+                pygame.draw.rect(display_surface, instruction.bg_color,
+                                 ((simulation.size[0], n*20),
+                                  (simulation.size[0] + ZOOM_VIEW_WIDTH,
+                                   (n+1)*20)))
+                display_surface.blit(i_surface, (simulation.size[0], n*20))
 
             # blit MARS visualization into display
             simulation.blit_into(display_surface, (0,0))

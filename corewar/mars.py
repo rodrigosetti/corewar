@@ -90,6 +90,9 @@ class MARS(object):
     def __len__(self):
         return len(self.core)
 
+    def __getitem__(self, address):
+        return self.core[address]
+
     def step(self):
         """Run one simulation step: execute one task of every active warrior.
         """
